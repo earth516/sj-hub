@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>SJ SCIENCE</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  color-scheme:dark;
+  --head:#101216; --glass:rgba(12,14,18,.92); --strong:#fff; --on-sea:#0c0e12;
+  --paper:#0c0e12; --surface:#171a20; --sunk:#1e222b;
+  --ink:#e8eaee; --body:#b4b9c4; --faint:#8b909b;
+  --line:#2a2e37; --line-soft:#22262b;
+  --sea:#7dd3c8; --sea-soft:rgba(125,211,200,.14);
+  --coral:#e06a5b; --ok:#4ade80;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper);color:var(--ink)}
+body{font-family:Pretendard,-apple-system,"Malgun Gothic",sans-serif;line-height:1.55;letter-spacing:-.01em;word-break:keep-all;min-height:100vh}
+a{color:inherit}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--sea);outline-offset:2px}
+
+/* 머리글 */
+header{position:sticky;top:0;z-index:20;background:var(--head);border-bottom:1px solid var(--line)}
+.bar{max-width:1080px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:10px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+.brand img{width:44px;height:44px;object-fit:contain}
+.brand b{font-size:19px;font-weight:800;letter-spacing:.02em;white-space:nowrap}
+.spacer{flex:1}
+.userbox{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--body)}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 14px;font-size:14px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:hover{border-color:var(--sea)}
+.btn.primary{background:var(--sea);color:var(--on-sea);border-color:transparent}
+.btn.ghost{background:transparent}
+.btn[disabled]{opacity:.5;cursor:default}
+
+main{max-width:1080px;margin:0 auto;padding:28px 20px 60px}
+.crumbs{font-size:14px;color:var(--faint);margin-bottom:14px}
+.crumbs a{text-decoration:none;color:var(--body)}
+.crumbs a:hover{color:var(--sea)}
+h1{font-size:28px;margin:0 0 6px;font-weight:800}
+h2{font-size:19px;margin:34px 0 12px;font-weight:700}
+.lead{color:var(--body);margin:0 0 24px;font-size:16px}
+.banner{background:var(--sea-soft);border:1px solid var(--line);border-radius:14px;padding:12px 16px;font-size:14px;color:var(--body);margin-bottom:24px}
+.banner b{color:var(--sea)}
+
+/* 카드 */
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;text-decoration:none;display:block;transition:border-color .15s,transform .15s}
+.card:hover{border-color:var(--c,var(--sea));transform:translateY(-2px)}
+.card .ic{font-size:30px}
+.card h3{margin:8px 0 4px;font-size:20px}
+.card p{margin:0;color:var(--body);font-size:14px}
+.card.unit h3{font-size:17px}
+.code{font-size:12px;color:var(--faint);font-weight:600}
+.prog{height:6px;background:var(--sunk);border-radius:99px;overflow:hidden;margin-top:12px}
+.prog i{display:block;height:100%;background:var(--c,var(--sea));border-radius:99px;transition:width .3s}
+.prog-t{font-size:12px;color:var(--faint);margin-top:6px}
+
+/* 학습 흐름 */
+.flow{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 24px}
+.flow span{font-size:13px;padding:5px 11px;border-radius:99px;background:var(--sunk);color:var(--body);border:1px solid var(--line)}
+.steps{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:12px}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 18px;display:flex;align-items:center;gap:14px}
+.step.done{border-color:rgba(74,222,128,.45)}
+.num{flex:none;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--sunk);font-weight:800;font-size:15px;color:var(--c,var(--sea))}
+.step.done .num{background:rgba(74,222,128,.15);color:var(--ok)}
+.step .info{flex:1;min-width:0}
+.step .type{font-size:12px;font-weight:700;color:var(--c,var(--sea))}
+.step .t{font-size:16px;font-weight:600}
+.step .acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.check.on{background:rgba(74,222,128,.15);border-color:var(--ok);color:var(--ok)}
+@media (max-width:620px){
+  .step{flex-wrap:wrap}
+  .step .acts{width:100%;justify-content:stretch}
+  .step .acts .btn{flex:1;justify-content:center}
+  .brand b{font-size:17px}
+  .uname,.pwbtn{display:none}
+  .userbox .btn{padding:7px 10px;font-size:13px}
+  .bar{padding:10px 14px}
+  .brand img{width:38px;height:38px}
+  h1{font-size:24px}
+}
+
+/* 로그인 창 */
+.modal{position:fixed;inset:0;z-index:50;background:rgba(5,6,8,.72);display:none;align-items:center;justify-content:center;padding:16px}
+.modal.show{display:flex}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:20px;width:100%;max-width:380px;padding:26px}
+.panel h3{margin:0 0 4px;font-size:21px}
+.panel .hint{color:var(--faint);font-size:14px;margin:0 0 18px}
+.panel label{display:block;font-size:14px;font-weight:600;margin:12px 0 6px;color:var(--body)}
+.panel input{width:100%;padding:11px 13px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font-size:16px}
+.err{color:var(--coral);font-size:14px;min-height:21px;margin:10px 0 4px}
+.row{display:flex;gap:8px;margin-top:6px}
+.row .btn{flex:1;justify-content:center;padding:11px}
+
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--sunk);border:1px solid var(--line);padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:60}
+.toast.show{opacity:1}
+/* 수업 페이지 */
+.meta{display:flex;gap:16px;flex-wrap:wrap;color:var(--body);font-size:14px;margin:6px 0 18px}
+.stepper{position:sticky;top:69px;z-index:10;background:var(--glass);backdrop-filter:blur(6px);display:flex;gap:6px;overflow-x:auto;padding:10px 0;margin-bottom:10px;scrollbar-width:none}
+.stepper::-webkit-scrollbar{display:none}
+.stepper button{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:6px 12px;font-size:13px;font-weight:600;color:var(--body)}
+.stepper button.on{border-color:var(--ok);color:var(--ok)}
+.lstep{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px 24px;margin:0 0 18px;scroll-margin-top:130px}
+.lstep.done{border-color:rgba(74,222,128,.45)}
+.lhead{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.lhead .num{width:34px;height:34px}
+.lhead .type{font-size:12px;font-weight:700;color:var(--c,var(--sea))}
+.lhead h3{margin:0;font-size:20px}
+.lstep.done .lhead .num{background:rgba(74,222,128,.15);color:var(--ok)}
+.lbody{font-size:16px;line-height:1.75;color:var(--ink)}
+.lbody p{margin:0 0 14px}
+.lbody h4{font-size:17px;margin:26px 0 10px;color:var(--c,var(--sea))}
+.lbody h4:first-child{margin-top:0}
+.lbody ul{margin:0 0 14px;padding-left:22px}
+.lbody li{margin-bottom:6px}
+.lbody b{color:var(--strong)}
+figure{margin:6px 0 18px}
+figure a{display:block;background:#fff;border-radius:12px;padding:8px;cursor:zoom-in}
+figure img{display:block;width:100%;height:auto;border-radius:6px}
+figcaption{font-size:13px;color:var(--faint);margin-top:8px;text-align:center}
+table.lt{border-collapse:collapse;width:100%;margin:4px 0 16px;font-size:15px}
+table.lt th,table.lt td{border:1px solid var(--line);padding:9px 12px;text-align:left}
+table.lt th{background:var(--sunk);color:var(--body);font-weight:600}
+.callout{background:var(--sea-soft);border-left:3px solid var(--c,var(--sea));border-radius:10px;padding:12px 16px;margin:0 0 16px;font-size:15px}
+details{background:var(--sunk);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:0 0 14px;font-size:15px}
+details summary{cursor:pointer;font-weight:600;font-size:14px;color:var(--body)}
+details[open] summary{margin-bottom:8px}
+.qa{margin:0 0 16px}
+.qa .q{font-weight:600;margin-bottom:8px}
+.write{margin:0 0 16px}
+.write label{display:block;font-weight:600;font-size:15px;margin-bottom:8px}
+.write label:empty{display:none}
+.write textarea{width:100%;min-height:84px;resize:vertical;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font:inherit;font-size:15px;line-height:1.6}
+.write .wrow{display:flex;align-items:center;gap:10px;margin-top:8px}
+.wst{font-size:13px;color:var(--faint)}
+.shown{background:var(--sunk);border-radius:12px;padding:12px 16px;margin:0 0 16px}
+.shown .lab{font-size:13px;color:var(--faint);font-weight:600;margin-bottom:4px}
+.news{border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:0 0 14px;background:var(--paper)}
+.news h5{margin:0 0 4px;font-size:16px}
+.news .src{font-size:12px;color:var(--faint);margin-bottom:10px}
+.news .sum{font-size:15px;color:var(--body);margin:0 0 12px}
+.news .ask{font-size:15px;margin:0 0 10px}
+.lgrid{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));margin:6px 0 4px}
+.lcard{border:1px solid var(--line);border-radius:12px;padding:12px 14px;text-decoration:none;display:block;background:var(--paper)}
+.lcard:hover{border-color:var(--c,var(--sea))}
+.lcard.off{opacity:.55;pointer-events:none}
+.lcard b{display:block;font-size:15px;color:var(--ink)}
+.lcard span{font-size:13px;color:var(--faint)}
+.match{display:grid;grid-template-columns:auto 1fr auto;gap:8px 12px;align-items:center;max-width:460px;margin:0 0 12px}
+.match select{padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font:inherit;font-size:15px}
+.match .mk{font-weight:800;font-size:17px}
+.res-ok{color:var(--ok);font-weight:700}
+.res-no{color:var(--coral);font-weight:700}
+.oxi{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:0 0 10px;background:var(--paper)}
+.oxi .row2{display:flex;gap:12px;align-items:center;justify-content:space-between}
+.oxi .q{font-size:15px}
+.oxi .bt{display:flex;gap:6px;flex:none}
+.oxi .bt button{width:44px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-weight:800;font-size:16px}
+.oxi .bt button.pick-ok{background:rgba(74,222,128,.15);border-color:var(--ok);color:var(--ok)}
+.oxi .bt button.pick-no{background:rgba(224,106,91,.15);border-color:var(--coral);color:var(--coral)}
+.oxi .bt button.sel{border-color:var(--sea);background:var(--sea-soft);color:var(--sea)}
+.oxact{margin-top:12px}
+.oxi .exp{font-size:14px;color:var(--body);margin-top:8px}
+.lhead .badge-done{display:none;font-size:12px;font-weight:700;color:var(--ok);border:1px solid var(--ok);border-radius:99px;padding:3px 10px}
+.lstep.done .badge-done{display:inline-block}
+.hint{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;color:var(--faint);margin:-2px 0 8px}
+.hint span{background:var(--sunk);border:1px solid var(--line);border-radius:99px;padding:2px 10px;color:var(--body)}
+.oxres{font-size:15px;margin-top:10px;min-height:1px}
+.pf-list{display:flex;flex-direction:column;gap:12px}
+.pf-card{display:block;text-decoration:none;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 18px}
+.pf-card:hover{border-color:var(--c)}
+.pf-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:8px}
+.pf-top b{font-size:17px}
+.pf-score{flex:none;font-size:14px;background:var(--sunk);border-radius:10px;padding:6px 10px}
+.pf-score b{color:var(--c);font-size:16px}
+.pf-sum{font-size:15px;color:var(--body);white-space:pre-wrap;line-height:1.65}
+.lfoot{display:flex;justify-content:flex-end;margin-top:8px;padding-top:14px;border-top:1px solid var(--line-soft)}
+@media (max-width:620px){
+  .lstep{padding:18px 16px}
+  .stepper{top:61px}
+  .oxi .row2{flex-direction:column;align-items:stretch}
+  .oxi .bt button{flex:1}
+}
+/* 선생님 대시보드 */
+.dash-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.dash-tools{display:flex;gap:8px}
+.dash-filters{display:flex;gap:14px;flex-wrap:wrap;margin:14px 0 20px}
+.dash-filters label,.pick{font-size:14px;color:var(--body);display:flex;align-items:center;gap:8px}
+.dash select{padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:14px;max-width:100%}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.tile span{display:block;font-size:13px;color:var(--faint)}
+.tile b{font-size:28px;font-weight:800}
+.tile small{font-size:14px;color:var(--faint);font-weight:500}
+.tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);margin-bottom:16px;overflow-x:auto}
+.tabs button{border:0;background:none;padding:10px 14px;font-weight:600;font-size:15px;color:var(--faint);border-bottom:2px solid transparent;white-space:nowrap}
+.tabs button.on{color:var(--sea);border-bottom-color:var(--sea)}
+.chk{display:inline-flex;gap:6px;align-items:center;font-size:14px;color:var(--body);margin-bottom:12px;cursor:pointer}
+.muted{color:var(--faint)}
+.rows{display:flex;flex-direction:column;gap:8px}
+.drow{display:grid;grid-template-columns:110px 1fr 90px;gap:14px;align-items:start;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.drow .who b{display:block;font-size:15px}
+.drow .who span{font-size:12px;color:var(--faint)}
+.drow .txt{font-size:15px;line-height:1.65;white-space:pre-wrap}
+.drow.miss .txt{color:var(--coral)}
+.drow.miss{border-style:dashed}
+.drow .sc{font-size:13px;text-align:right}
+.drow .sc b{font-size:16px;color:var(--sea)}
+.tm{font-size:12px;color:var(--faint);margin-top:6px}
+.items{display:flex;flex-direction:column;gap:10px}
+.item{display:grid;grid-template-columns:1fr 200px 90px;gap:14px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.item .iq{font-size:15px}
+.item .ans{font-size:12px;color:var(--faint);margin-left:6px}
+.ibar{height:10px;background:var(--sunk);border-radius:99px;overflow:hidden}
+.ibar i{display:block;height:100%;background:var(--sea);border-radius:99px}
+.item.low .ibar i{background:var(--coral)}
+.item.low .ip b{color:var(--coral)}
+.ip{text-align:right;font-size:13px;color:var(--faint)}
+.ip b{font-size:17px;color:var(--ink)}
+.pick{margin-bottom:14px}
+.oxd{font-size:12px;color:var(--faint);letter-spacing:.05em;margin-top:2px}
+@media (max-width:720px){
+  .tiles{grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .tile b{font-size:22px}
+  .drow{grid-template-columns:1fr auto}
+  .drow .txt{grid-column:1 / -1;grid-row:2}
+  .item{grid-template-columns:1fr auto}
+  .item .ibar{grid-column:1 / -1}
+}
+/* 밝은 화면 */
+:root[data-theme="light"]{
+  color-scheme:light;
+  --paper:#f5f6f8; --surface:#ffffff; --sunk:#eef0f3;
+  --ink:#16191e; --body:#454b55; --faint:#6b717c;
+  --line:#dde1e6; --line-soft:#e9ecef;
+  --sea:#0e8a7c; --sea-soft:rgba(14,138,124,.09);
+  --coral:#c4473a; --ok:#15803d;
+  --head:#ffffff; --glass:rgba(245,246,248,.94); --strong:#000; --on-sea:#ffffff;
+}
+:root[data-theme="light"] figure a{border:1px solid var(--line)}
+.icon-btn{padding:8px 10px}
+
+/* 할 일 · 피드백 · 비교 · 헷갈린 개념 */
+.todo{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--sea);border-radius:14px;padding:16px 18px;margin-bottom:26px}
+.todo h2{margin:0 0 10px;font-size:18px}
+.todo ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.todo li a{display:flex;justify-content:space-between;gap:10px;text-decoration:none;padding:10px 12px;border-radius:10px;background:var(--sunk)}
+.todo li a:hover{outline:1px solid var(--sea)}
+.todo li small{color:var(--faint)}
+.todo .clear{color:var(--ok);font-weight:600}
+.fbnote{margin-top:10px;font-size:14px;color:var(--body)}
+.fbnote a{color:var(--sea)}
+.model{display:none;background:var(--sunk);border:1px dashed var(--sea);border-radius:12px;padding:12px 16px;margin:12px 0 0;font-size:15px}
+.model .lab,.fb .lab{font-size:13px;font-weight:700;color:var(--sea);margin-bottom:6px}
+.model .tip{font-size:13px;color:var(--faint);margin:8px 0 0}
+.fb{background:var(--sea-soft);border:1px solid var(--sea);border-radius:12px;padding:12px 16px;margin:0 0 18px;font-size:15px}
+.fb b.sc{font-size:18px;color:var(--sea)}
+.confuse{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 16px}
+.confuse button{border:1px solid var(--line);background:var(--paper);border-radius:99px;padding:7px 14px;font-size:14px}
+.confuse button.on{border-color:var(--sea);background:var(--sea-soft);color:var(--sea);font-weight:700}
+.cq{font-weight:600;font-size:15px;margin:22px 0 4px}
+.fbx{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.fbx select,.fbx input{padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font:inherit;font-size:13px}
+.fbx input{flex:1;min-width:160px}
+.fbx .btn{padding:6px 10px;font-size:13px}
+.fbx .st{font-size:12px;color:var(--faint)}
+.drow.miss .fbx{color:var(--ink)}
+.tiles.four{grid-template-columns:repeat(4,1fr)}
+@media (max-width:720px){ .tiles.four{grid-template-columns:1fr 1fr} }
+footer{border-top:1px solid var(--line);color:var(--faint);font-size:13px;text-align:center;padding:22px 16px}
+footer a{color:var(--body)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="bar">
+    <a class="brand" href="#/">
+      <img src="https://earth516.github.io/lab-reports/assets/images/sj-science-logo.png" alt="" onerror="this.remove()">
+      <b class="site-title">SJ SCIENCE</b>
+    </a>
+    <div class="spacer"></div>
+    <div class="userbox" id="userbox"></div>
+  </div>
+</header>
+
+<main id="app"></main>
+
+<footer>
+  <span id="foot"></span>
+</footer>
+
+<!-- 로그인 창 -->
+<div class="modal" id="login-modal" role="dialog" aria-modal="true" aria-labelledby="login-title">
+  <form class="panel" id="login-form">
+    <h3 id="login-title">로그인</h3>
+    <p class="hint">선생님께 받은 학번과 비밀번호로 로그인하세요.<br>로그인하면 학습 기록이 저장돼요.</p>
+    <label for="login-id">학번</label>
+    <input id="login-id" inputmode="numeric" autocomplete="username">
+    <label for="login-pw">비밀번호</label>
+    <input id="login-pw" type="password" autocomplete="current-password">
+    <p class="err" id="login-err"></p>
+    <div class="row">
+      <button type="button" class="btn ghost" data-close>닫기</button>
+      <button class="btn primary" id="login-btn">로그인</button>
+    </div>
+  </form>
+</div>
+
+<!-- 비밀번호 변경 창 -->
+<div class="modal" id="pw-modal" role="dialog" aria-modal="true" aria-labelledby="pw-title">
+  <form class="panel" id="pw-form">
+    <h3 id="pw-title">비밀번호 바꾸기</h3>
+    <p class="hint">새 비밀번호는 4자 이상으로 정해 주세요.</p>
+    <label for="pw-old">지금 비밀번호</label>
+    <input id="pw-old" type="password" autocomplete="current-password">
+    <label for="pw-new">새 비밀번호</label>
+    <input id="pw-new" type="password" autocomplete="new-password">
+    <label for="pw-new2">새 비밀번호 확인</label>
+    <input id="pw-new2" type="password" autocomplete="new-password">
+    <p class="err" id="pw-err"></p>
+    <div class="row">
+      <button type="button" class="btn ghost" data-close>닫기</button>
+      <button class="btn primary" id="pw-btn">바꾸기</button>
+    </div>
+  </form>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="config.js"></script>
+<script>
+/* ============================================================
+   화면 코드 — 내용은 config.js 에서 바꿉니다.
+   ============================================================ */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const TYPE = {
+  video: { label: '개념', icon: '🎬', open: '영상 보기' },
+  lab:   { label: '탐구', icon: '🧪', open: '실험하기' },
+  quiz:  { label: '문제', icon: '📝', open: '문제 풀기' },
+  note:  { label: '정리', icon: '📒', open: '자료 보기' },
+};
+const DEMO = !API_URL;
+const LS_SESSION = 'sjhub.session';
+const LS_DEMO = 'sjhub.demo';
+
+document.title = SITE.title;
+document.querySelectorAll('.site-title').forEach(el => el.textContent = SITE.title);
+$('foot').innerHTML = `© ${esc(SITE.teacher)} · 오류 제보 <a href="mailto:${esc(SITE.email)}">${esc(SITE.email)}</a> · <a href="${esc(SITE.youtube)}" target="_blank" rel="noopener">YouTube</a>`;
+
+/* ---------- 데이터 찾기 ---------- */
+const subjectById = id => SUBJECTS.find(s => s.id === id);
+const allUnits = s => s.chapters.flatMap(c => c.units);
+const stepKey = (s, u, step) => `${s.id}|${u.code}|${step.title}`;   // 기록에 쓰는 이름 (활동 제목이 바뀌면 새 활동으로 칩니다)
+
+/* ---------- 로그인 상태 ---------- */
+const lsGet = k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
+const lsSet = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+let theme = lsGet('sjhub.theme') || 'dark';
+document.documentElement.dataset.theme = theme;
+const sc = s => theme === 'light' ? (s.colorLight || s.color) : s.color;   // 과목 색 (밝은 화면용 색이 따로 있으면 그것)
+window.toggleTheme = () => {
+  theme = theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = theme; lsSet('sjhub.theme', theme);
+  renderUser(); route();
+};
+let session = lsGet(LS_SESSION);   // { token, id, name }  ※ 비밀번호는 저장하지 않아요
+let done = new Set();              // 완료한 활동 이름들
+
+/* ---------- 서버와 통신 ---------- */
+async function api(action, data = {}) {
+  if (DEMO) return demoApi(action, data);
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },   // 구글 서버와 통신할 때 필요한 형식
+    body: JSON.stringify({ action, token: session && session.token, ...data }),
+  });
+  const r = await res.json();
+  if (r.error === 'EXPIRED') { endSession('로그인 시간이 지났어요. 다시 로그인해 주세요.'); throw new Error('EXPIRED'); }
+  return r;
+}
+
+/* 체험 모드: 서버 없이 이 브라우저 안에서만 흉내 냅니다. */
+function demoApi(action, d) {
+  const db = lsGet(LS_DEMO) || { pw: '1234', done: [] };
+  const save = () => lsSet(LS_DEMO, db);
+  if (action === 'login') {
+    if (d.id === 'teacher' && d.pw === '1234') return { ok: true, token: 'demo', id: 'teacher', name: '선생님', role: '교사', done: [] };
+    if (d.id !== '10101' || d.pw !== db.pw) return { ok: false, error: '학번 또는 비밀번호가 맞지 않아요. (체험용 학생 10101 / 1234, 선생님 teacher / 1234)' };
+    return { ok: true, token: 'demo', id: '10101', name: '체험학생', done: db.done };
+  }
+  if (action === 'progress') return { ok: true, done: db.done };
+  if (action === 'mark') {
+    const s = new Set(db.done); d.on ? s.add(d.key) : s.delete(d.key); db.done = [...s]; save();
+    return { ok: true };
+  }
+  if (action === 'changePw') {
+    if (d.oldPw !== db.pw) return { ok: false, error: '지금 비밀번호가 맞지 않아요.' };
+    db.pw = d.newPw; save(); return { ok: true };
+  }
+  const withFb = (unit, n) => ({ ...(n || {}), ...((db.fb || {})['10101|' + unit] || {}) });
+  if (action === 'myNotes') {
+    const all = {}; const units = new Set([...Object.keys(db.notes || {}), ...Object.keys(db.fb || {}).filter(k => k.startsWith('10101|')).map(k => k.slice(6))]);
+    units.forEach(u => all[u] = withFb(u, (db.notes || {})[u])); return { ok: true, notes: all };
+  }
+  if (action === 'notes') return { ok: true, notes: withFb(d.unit, (db.notes || {})[d.unit]) };
+  if (action === 'saveNote') {
+    db.notes = db.notes || {}; db.notes[d.unit] = db.notes[d.unit] || {};
+    db.times = db.times || {}; const tk = d.unit + '|' + d.field, now = new Date().toISOString();
+    if (['ox', 'oxDetail'].includes(d.field) && db.notes[d.unit][d.field]) return { ok: true };   // OX는 처음 기록 유지
+    db.notes[d.unit][d.field] = d.text;
+    db.times[tk] = { first: (db.times[tk] || {}).first || now, last: now };
+    save(); return { ok: true };
+  }
+  if (action === 'dash') return demoDash(db);
+  if (action === 'gradeOx') {   // 체험 모드: 예시 파일의 정답으로 채점
+    const key = curUnit.L.steps.flatMap(st => st.blocks).find(b => b.ox).ox;
+    const results = key.map((o, i) => ({ ok: d.picks[i] === (o.a ? 'O' : 'X'), a: o.a ? 'O' : 'X', exp: o.exp }));
+    const score = `${results.filter(r => r.ok).length}/${results.length}`;
+    db.notes = db.notes || {}; db.notes[d.unit] = db.notes[d.unit] || {};
+    if (db.notes[d.unit].ox) return { ok: true, results, score, recorded: false, kept: db.notes[d.unit].ox };
+    const now = new Date().toISOString(); db.times = db.times || {};
+    db.notes[d.unit].ox = score; db.notes[d.unit].oxDetail = results.map(r => r.ok ? '1' : '0').join('');
+    db.times[d.unit + '|ox'] = db.times[d.unit + '|oxDetail'] = { first: now, last: now };
+    save(); return { ok: true, results, score, recorded: true };
+  }
+  if (action === 'feedback') {
+    db.fb = db.fb || {}; const fk = d.sid + '|' + d.unit;
+    db.fb[fk] = { fbScore: d.score, fbComment: d.comment }; save(); return { ok: true };
+  }
+  if (action === 'logout') return { ok: true };
+  return { ok: false, error: '알 수 없는 요청' };
+}
+
+/* 체험용 대시보드 자료: 가상의 학생들 + 이 브라우저에서 체험학생(10101)이 남긴 기록 */
+function demoDash(db) {
+  const U = 'earth|1-2-1';
+  const students = [['10101', '체험학생'], ['10102', '김하늘'], ['10103', '박바다'], ['10104', '이구름'], ['10105', '정해류'],
+    ['10106', '최바람'], ['10107', '한별'], ['10201', '오지구'], ['10202', '윤태양']].map(([id, name]) => ({ id, name }));
+  const fake = {
+    '10102': ['저위도는 에너지가 남고 고위도는 부족해서 대기 대순환이 생긴다. 위도 0~30°에는 무역풍, 30~60°에는 편서풍이 불고 이 바람이 표층 해류를 만든다.', '11111', '2026-11-20T09:12', '2026-11-20T09:12'],
+    '10103': ['무역풍은 동쪽에서 서쪽으로 불어서 적도 부근 해류도 서쪽으로 흐른다. 편서풍대에서는 해류가 동쪽으로 흐른다.', '11011', '2026-11-20T09:15', '2026-11-20T20:41'],
+    '10104': ['바람 때문에 해류가 생긴다.', '10001', '2026-11-20T09:20', '2026-11-20T09:20'],
+    '10105': ['위도에 따라 받는 태양 에너지가 달라서 열을 옮기는 대기 대순환이 일어나고, 지구 자전 때문에 무역풍·편서풍·극동풍이 생긴다. 표층 해류는 이 바람을 따라 흐르고 북반구에서는 시계 방향으로 순환한다.', '11111', '2026-11-20T09:18', '2026-11-21T08:02'],
+    '10106': [null, '11001'],
+    '10201': ['편서풍이 부는 곳에서는 북태평양 해류가 서에서 동으로 흐르고, 무역풍대에서는 북적도 해류가 동에서 서로 흐른다.', '10111', '2026-11-21T10:05', '2026-11-21T10:05'],
+  };
+  const notes = [];
+  Object.entries(fake).forEach(([id, [sum, det, first, last]]) => {
+    const name = students.find(s => s.id === id).name, t = first || '2026-11-20T09:30';
+    if (sum) notes.push({ id, name, unit: U, field: 'summary', text: sum, first, last });
+    notes.push({ id, name, unit: U, field: 'oxDetail', text: det, first: t, last: t });
+    notes.push({ id, name, unit: U, field: 'ox', text: `${[...det].filter(c => c === '1').length}/${det.length}`, first: t, last: t });
+  });
+  const conf = { '10102': '해류가 도는 방향 (북반구·남반구)', '10103': '무역풍·편서풍의 방향', '10104': '무역풍·편서풍의 방향', '10105': '헷갈린 것 없음', '10106': '난류·한류가 흐르는 위치', '10201': '무역풍·편서풍의 방향' };
+  Object.entries(conf).forEach(([id, text]) => notes.push({ id, name: students.find(s => s.id === id).name, unit: U, field: 'confuse', text }));
+  Object.entries(db.fb || {}).forEach(([fk, v]) => { const [id, ...rest] = fk.split('|'), unit = rest.join('|');
+    Object.entries(v).forEach(([field, text]) => notes.push({ id, name: '', unit, field, text })); });
+  Object.entries(db.notes || {}).forEach(([unit, fields]) => Object.entries(fields).forEach(([field, text]) => {
+    const t = (db.times || {})[unit + '|' + field] || {};
+    notes.push({ id: '10101', name: '체험학생', unit, field, text, first: t.first, last: t.last });
+  }));
+  return { ok: true, students, notes };
+}
+
+/* ---------- 로그인 / 로그아웃 ---------- */
+function openModal(id) {
+  $(id).classList.add('show');
+  $(id).querySelectorAll('input').forEach(i => i.value = '');
+  $(id).querySelector('.err').textContent = '';
+  const saved = lsGet('sjhub.lastId');
+  if (id === 'login-modal' && saved) $('login-id').value = saved;
+  setTimeout(() => $(id).querySelector(saved && id === 'login-modal' ? '#login-pw' : 'input').focus(), 30);
+}
+function closeModal(el) { el.closest('.modal').classList.remove('show'); }
+document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => closeModal(b));
+document.querySelectorAll('.modal').forEach(m => m.addEventListener('click', e => { if (e.target === m) m.classList.remove('show'); }));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.modal.show').forEach(m => m.classList.remove('show')); });
+
+$('login-form').onsubmit = async e => {
+  e.preventDefault();
+  const id = $('login-id').value.trim(), pw = $('login-pw').value.trim();
+  if (!id || !pw) { $('login-err').textContent = '학번과 비밀번호를 모두 입력해 주세요.'; return; }
+  const btn = $('login-btn'); btn.disabled = true; btn.textContent = '확인 중…'; $('login-err').textContent = '';
+  try {
+    const r = await api('login', { id, pw });
+    if (!r.ok) throw new Error(r.error || '로그인에 실패했어요.');
+    session = { token: r.token, id: r.id, name: r.name, role: r.role || '' };
+    lsSet(LS_SESSION, session); lsSet('sjhub.lastId', r.id);
+    done = new Set(r.done || []);
+    $('login-modal').classList.remove('show');
+    toast(r.role === '교사' ? `${r.name}, 반가워요!` : `${r.name} 학생, 반가워요!`);
+    if (r.role === '교사' && !location.hash.startsWith('#/dash')) location.hash = '#/dash';
+    renderUser(); route();
+  } catch (err) {
+    $('login-err').textContent = /fetch/i.test(err.message) ? '서버에 연결하지 못했어요. 인터넷 연결을 확인해 주세요.' : err.message;
+  } finally { btn.disabled = false; btn.textContent = '로그인'; }
+};
+
+$('pw-form').onsubmit = async e => {
+  e.preventDefault();
+  const oldPw = $('pw-old').value.trim(), newPw = $('pw-new').value.trim(), newPw2 = $('pw-new2').value.trim();
+  const err = t => $('pw-err').textContent = t;
+  if (!oldPw || !newPw) return err('빈칸을 모두 채워 주세요.');
+  if (newPw.length < 4) return err('새 비밀번호는 4자 이상이어야 해요.');
+  if (newPw !== newPw2) return err('새 비밀번호가 서로 달라요.');
+  const btn = $('pw-btn'); btn.disabled = true;
+  try {
+    const r = await api('changePw', { oldPw, newPw });
+    if (!r.ok) throw new Error(r.error);
+    $('pw-modal').classList.remove('show'); toast('비밀번호를 바꿨어요.');
+  } catch (e2) { if (e2.message !== 'EXPIRED') err(e2.message || '바꾸지 못했어요.'); }
+  finally { btn.disabled = false; }
+};
+
+function endSession(msg) {
+  session = null; done = new Set(); dashData = null; lsSet(LS_SESSION, null);
+  renderUser(); route();
+  if (msg) { toast(msg); openModal('login-modal'); }
+}
+window.logout = async () => { try { await api('logout'); } catch {} endSession(); toast('로그아웃했어요.'); };
+window.openLogin = () => openModal('login-modal');
+window.openPw = () => openModal('pw-modal');
+
+function renderUser() {
+  const tb = `<button class="btn ghost icon-btn" onclick="toggleTheme()" title="${theme === 'dark' ? '밝은 화면' : '어두운 화면'}" aria-label="화면 밝기 바꾸기">${theme === 'dark' ? '☀️' : '🌙'}</button>`;
+  $('userbox').innerHTML = tb + (session
+    ? `<span class="uname">👤 ${esc(session.name)}</span>
+       ${session.role === '교사' ? '<a class="btn primary" href="#/dash">📊 대시보드</a>' : '<a class="btn primary" href="#/me">📁 내 기록</a>'}
+       <button class="btn ghost pwbtn" onclick="openPw()">비밀번호</button>
+       <button class="btn" onclick="logout()">로그아웃</button>`
+    : `<button class="btn primary" onclick="openLogin()">로그인</button>`);
+}
+
+/* ---------- 완료 체크 ---------- */
+window.toggleStep = async key => {
+  if (!session) { toast('로그인하면 학습 기록을 저장할 수 있어요.'); openModal('login-modal'); return; }
+  const on = !done.has(key);
+  on ? done.add(key) : done.delete(key);   // 화면에는 먼저 반영
+  refreshDone();
+  try {
+    const r = await api('mark', { key, on });
+    if (!r.ok) throw new Error(r.error);
+  } catch (e) {
+    on ? done.delete(key) : done.add(key);  // 실패하면 되돌리기
+    refreshDone();
+    if (e.message !== 'EXPIRED') toast('저장하지 못했어요. 잠시 뒤 다시 눌러 주세요.');
+  }
+};
+
+/* ---------- 화면 그리기 ---------- */
+function itemsOf(s, u) {   // 단원의 진도 항목들 (수업 페이지면 단계, 아니면 활동)
+  const L = u.lesson && LESSONS[u.lesson];
+  if (L) return L.steps.map(st => ({ key: `${s.id}|${u.code}|${st.id}`, icon: LT[st.type].icon }));
+  return (u.steps || []).map(st => ({ key: stepKey(s, u, st), icon: TYPE[st.type].icon }));
+}
+function progressOf(s, units) {
+  let total = 0, n = 0;
+  units.forEach(u => itemsOf(s, u).forEach(it => { total++; if (done.has(it.key)) n++; }));
+  return { total, n, pct: total ? Math.round(n / total * 100) : 0 };
+}
+const bar = (p, showText = true) => `<div class="prog"><i style="width:${p.pct}%"></i></div>${showText ? `<div class="prog-t">${p.n} / ${p.total} 활동 완료</div>` : ''}`;
+
+function viewHome() {
+  return `
+    ${DEMO ? `<div class="banner"><b>체험 모드</b> · 아직 구글 시트와 연결되지 않았어요. 학생은 <b>10101</b> / <b>1234</b>, 선생님은 <b>teacher</b> / <b>1234</b>로 로그인해 볼 수 있고, 기록은 이 브라우저에만 저장돼요.</div>` : ''}
+    <h1>${esc(SITE.title)}</h1>
+    <p class="lead">${esc(SITE.subtitle)}</p>
+    ${viewTodo()}
+    <div class="grid">
+      ${SUBJECTS.map(s => {
+        const p = progressOf(s, allUnits(s));
+        return `<a class="card" href="#/${s.id}" style="--c:${sc(s)}">
+          <div class="ic">${s.icon}</div><h3>${esc(s.title)}</h3><p>${esc(s.desc)}</p>
+          ${session ? bar(p) : `<div class="prog-t">${allUnits(s).length}개 단원</div>`}
+        </a>`;
+      }).join('')}
+    </div>
+    <h2>바로가기</h2>
+    <div class="grid">
+      <a class="card" href="${LINKS.lab}" target="_blank" rel="noopener"><div class="ic">🧪</div><h3>SJ SCIENCE LAB</h3><p>디지털 실험실 · 활동 보고서</p></a>
+      <a class="card" href="${LINKS.earthBank}" target="_blank" rel="noopener"><div class="ic">🌏</div><h3>지구과학 문제은행</h3><p>문제풀기 · 빈칸 · OX · 서술형</p></a>
+      <a class="card" href="${LINKS.intBank}" target="_blank" rel="noopener"><div class="ic">🔬</div><h3>통합과학 문제은행</h3><p>문제풀기 · 기출 · 빈칸 · OX</p></a>
+      <a class="card" href="${LINKS.notes}" target="_blank" rel="noopener"><div class="ic">🎬</div><h3>개념노트 영상</h3><p>유튜브 재생목록</p></a>
+    </div>`;
+}
+
+function viewSubject(s) {
+  return `
+    <div class="crumbs"><a href="#/">홈</a> › ${esc(s.title)}</div>
+    <h1 style="color:${sc(s)}">${s.icon} ${esc(s.title)}</h1>
+    <p class="lead">단원을 골라 개념 → 탐구 → 문제 → 정리 순서로 공부해요.</p>
+    ${s.chapters.map(c => `
+      <h2>${esc(c.title)}</h2>
+      <div class="grid">
+        ${c.units.map(u => {
+          const p = progressOf(s, [u]);
+          return `<a class="card unit" href="#/${s.id}/${encodeURIComponent(u.code)}" style="--c:${sc(s)}">
+            <div class="code">${esc(u.code)}</div><h3>${esc(u.title)}</h3>
+            <p>${u.lesson ? '<b style="color:var(--c)">수업</b> · ' : ''}${itemsOf(s, u).map(it => it.icon).join(' ')}</p>
+            ${session ? bar(p, false) : ''}
+          </a>`;
+        }).join('')}
+      </div>`).join('')}`;
+}
+
+function viewUnit(s, u) {
+  const chapter = s.chapters.find(c => c.units.includes(u));
+  const p = progressOf(s, [u]);
+  const units = allUnits(s), i = units.indexOf(u);
+  const prev = units[i - 1], next = units[i + 1];
+  return `
+    <div class="crumbs"><a href="#/">홈</a> › <a href="#/${s.id}">${esc(s.title)}</a> › ${esc(chapter.title)}</div>
+    <div class="code">${esc(u.code)}</div>
+    <h1>${esc(u.title)}</h1>
+    <div class="flow">${[...new Set(u.steps.map(st => st.type))].map(t => `<span>${TYPE[t].icon} ${TYPE[t].label}</span>`).join('<span style="border:0;background:none;padding:5px 0">→</span>')}</div>
+    ${session ? `<div style="max-width:320px;margin-bottom:20px;--c:${sc(s)}">${bar(p)}</div>` : `<div class="banner">로그인하면 활동을 마칠 때마다 <b>완료</b>를 눌러 기록을 남길 수 있어요.</div>`}
+    <ol class="steps" style="--c:${sc(s)}">
+      ${u.steps.map((st, k) => {
+        const key = stepKey(s, u, st), on = done.has(key), T = TYPE[st.type];
+        return `<li class="step ${on ? 'done' : ''}">
+          <div class="num">${on ? '✓' : k + 1}</div>
+          <div class="info"><div class="type">${T.icon} ${T.label}</div><div class="t">${esc(st.title)}</div></div>
+          <div class="acts">
+            <a class="btn" href="${esc(st.url)}" target="_blank" rel="noopener">${T.open} ↗</a>
+            <button class="btn check ${on ? 'on' : ''}" data-key="${esc(key)}" onclick="toggleStep(this.dataset.key)">${on ? '✓ 완료' : '완료'}</button>
+          </div>
+        </li>`;
+      }).join('')}
+    </ol>
+    <div class="row" style="margin-top:26px;max-width:520px">
+      ${prev ? `<a class="btn" href="#/${s.id}/${encodeURIComponent(prev.code)}">← ${esc(prev.title)}</a>` : ''}
+      ${next ? `<a class="btn" href="#/${s.id}/${encodeURIComponent(next.code)}">${esc(next.title)} →</a>` : ''}
+    </div>`;
+}
+
+/* ============================================================
+   단원 점검 페이지 (lessons 폴더의 파일을 읽어 보여 줌)
+   - 개념 정리 글을 저장하거나, 뉴스 설명을 보거나, OX를 다 풀면
+     그 단계가 자동으로 '완료'되고 포트폴리오(내 기록)에 남아요.
+   ============================================================ */
+const LT = {
+  observe: { icon: '👀', label: '관찰' },
+  ask:     { icon: '❓', label: '질문' },
+  concept: { icon: '📖', label: '개념 정리' },
+  explore: { icon: '🧪', label: '탐구' },
+  news:    { icon: '📰', label: '세상과 연결' },
+  check:   { icon: '✅', label: 'OX 확인' },
+  reflect: { icon: '🔁', label: '돌아보기' },
+};
+const notes = {};    // notes['과목|단원|항목'] = 저장된 글
+const drafts = {};   // 아직 저장 안 한 글 (다시 그려도 사라지지 않게)
+let curUnit = null;  // 지금 보고 있는 단원 { s, u, L, unitKey }
+
+function loadLessons() {
+  const names = [...new Set(SUBJECTS.flatMap(s => allUnits(s)).map(u => u.lesson).filter(Boolean))];
+  return Promise.all(names.map(n => new Promise(res => {
+    const el = document.createElement('script');
+    el.src = `lessons/${n}.js`;
+    el.onload = res;
+    el.onerror = () => { console.warn('수업 파일을 찾을 수 없어요:', n); res(); };
+    document.head.appendChild(el);
+  })));
+}
+
+/* 시트(단원·OX·뉴스·헷갈린개념 탭)에서 내용 불러오기
+   - 체험 모드(API_URL 비어 있음)에서는 lessons 폴더의 예시 파일을 씁니다. */
+async function loadContent() {
+  if (DEMO) return loadLessons();
+  SUBJECTS.forEach(s => s.chapters.forEach(c => c.units = c.units.filter(u => !u.lesson)));   // 내용은 시트가 기준
+  const cached = lsGet('sjhub.content');
+  if (cached) applyContent(cached);
+  const fresh = api('content').then(r => {
+    if (!r.ok) return;
+    const changed = !cached || JSON.stringify(r.units) !== JSON.stringify(cached.units);
+    lsSet('sjhub.content', r); applyContent(r);
+    if (cached && changed && !document.querySelector('.lesson')) route();   // 바뀐 내용이 있으면 다시 그리기 (풀던 화면은 그대로)
+  }).catch(() => {});
+  if (!cached) await fresh;
+}
+function applyContent(data) {
+  SUBJECTS.forEach(s => {
+    s.chapters.forEach(c => c.units = c.units.filter(u => !u.fromSheet));
+    s.chapters = s.chapters.filter(c => !c.fromSheet || c.units.length);
+  });
+  (data.units || []).forEach(x => {
+    const s = SUBJECTS.find(v => v.title === x.subject || v.id === x.subject);
+    if (!s) return;
+    s.chapters.forEach(c => c.units = c.units.filter(u => u.code !== x.code));   // 같은 코드면 시트 내용으로 바꾸기
+    let ch = s.chapters.find(c => c.title === x.chapter);
+    if (!ch) { ch = { title: x.chapter || '기타', units: [], fromSheet: true }; s.chapters.push(ch); }
+    const id = `sheet:${s.id}:${x.code}`;
+    LESSONS[id] = buildLesson(x, s);
+    ch.units.push({ code: x.code, title: x.title, lesson: id, fromSheet: true });
+    ch.units.sort((a, b) => a.code.localeCompare(b.code, 'ko', { numeric: true }));
+  });
+}
+/* 시트의 한 단원 → 수업 페이지 구조 ( **굵게** 를 쓸 수 있어요) */
+function buildLesson(x, s) {
+  const md = t => esc(t || '').replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+  const steps = [{ id: 'concept', type: 'concept', title: '개념 정리', blocks: [
+    ...(x.img ? [{ img: x.img, caption: x.imgCaption }] : []),
+    ...(x.points.length ? [{ list: x.points.map(md) }] : []),
+    { write: 'summary', label: '✍️ 핵심 개념을 내 말로 2~3문장 정리해 보세요.', hint: x.hint, placeholder: '제시어를 넣어 정리해 보세요.', hasModel: x.hasModel },
+  ]}];
+  if (x.news.length) steps.push({ id: 'news', type: 'news', title: '세상과 연결',
+    blocks: x.news.map(n => ({ news: { title: n.title, source: n.source, date: n.date, url: n.url, summary: md(n.summary), ask: md(n.ask), answer: md(n.answer) } })) });
+  if (x.ox.length || x.confuse.length) steps.push({ id: 'check', type: 'check', title: 'OX 확인', blocks: [
+    ...(x.ox.length ? [{ ox: x.ox.map(o => ({ q: md(o.q) })) }] : []),
+    ...(x.confuse.length ? [{ confuse: x.confuse }] : []),
+    ...(s.bank ? [{ links: [{ title: `문제은행 · ${x.title} 더 풀기`, desc: `SJ ${s.title} 문제은행 ${x.code}`, url: s.bank }] }] : []),
+  ]});
+  return { goal: x.goal, time: x.time, img: 'images/', steps };
+}
+
+function viewLesson(s, u, L) {
+  if (!L) return `<div class="crumbs"><a href="#/">홈</a> › <a href="#/${s.id}">${esc(s.title)}</a></div><p>수업 파일(lessons/${esc(u.lesson)}.js)을 찾을 수 없어요.</p>`;
+  const unitKey = `${s.id}|${u.code}`;
+  curUnit = { s, u, L, unitKey };
+  const chapter = s.chapters.find(c => c.units.includes(u));
+  const p = progressOf(s, [u]);
+  return `<div class="lesson" style="--c:${sc(s)}">
+    <div class="crumbs"><a href="#/">홈</a> › <a href="#/${s.id}">${esc(s.title)}</a> › ${esc(chapter.title)}</div>
+    <div class="code">${esc(u.code)}</div>
+    <h1>${esc(u.title)}</h1>
+    <div class="meta">${L.goal ? `<span>🎯 ${esc(L.goal)}</span>` : ''}${L.time ? `<span>⏱ ${esc(L.time)}</span>` : ''}</div>
+    ${session ? `<div style="max-width:320px;margin-bottom:18px" id="lesson-prog">${bar(p)}</div>`
+              : `<div class="banner">로그인하면 내가 정리한 개념과 OX 점수가 <b>포트폴리오</b>에 기록돼요.</div>`}
+    <div id="lesson-fb">${fbBox(notes[`${unitKey}|fbScore`], notes[`${unitKey}|fbComment`])}</div>
+    ${L.steps.map((st, i) => {
+      const key = `${unitKey}|${st.id}`, on = done.has(key);
+      return `<section class="lstep ${on ? 'done' : ''}" id="st-${st.id}" data-sk="${esc(key)}">
+        <div class="lhead"><div class="num">${on ? '✓' : i + 1}</div>
+          <div style="flex:1"><div class="type">${LT[st.type].icon} ${LT[st.type].label}</div><h3>${esc(st.title)}</h3></div>
+          <span class="badge-done">완료</span></div>
+        <div class="lbody">${st.blocks.map((b, k) => renderBlock(b, L, unitKey, `${st.id}-${k}`)).join('')}</div>
+      </section>`;
+    }).join('')}
+  </div>`;
+}
+
+/* 블록 하나 그리기 — p·list·callout 안에는 <b> 같은 간단한 태그를 쓸 수 있어요 */
+function renderBlock(b, L, unitKey, bid) {
+  const stepId = bid.slice(0, bid.lastIndexOf('-'));
+  if (b.h) return `<h4>${b.h}</h4>`;
+  if (b.p) return `<p>${b.p}</p>`;
+  if (b.callout) return `<div class="callout">💡 ${b.callout}</div>`;
+  if (b.img) { const src = /^https?:/.test(b.img) ? b.img : L.img + b.img;
+    return `<figure><a href="${esc(src)}" target="_blank" rel="noopener" style="${b.width ? `max-width:${b.width}px;margin:0 auto` : ''}"><img src="${esc(src)}" alt="${esc(b.caption || '')}" loading="lazy"></a>${b.caption ? `<figcaption>${esc(b.caption)}</figcaption>` : ''}</figure>`; }
+  if (b.more) return `<details><summary>${esc(b.more)}</summary><ul>${b.list.map(x => `<li>${x}</li>`).join('')}</ul></details>`;
+  if (b.list) return `<ul>${b.list.map(x => `<li>${x}</li>`).join('')}</ul>`;
+  if (b.table) return `<table class="lt"><thead><tr>${b.table[0].map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>${b.table.slice(1).map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+  if (b.qa) return `<div class="qa"><div class="q">🤔 ${b.qa}</div><details><summary>답 확인하기</summary>${b.a}</details></div>`;
+  if (b.links) return `<div class="lgrid">${b.links.map(l => `<a class="lcard ${l.url ? '' : 'off'}" ${l.url ? `href="${esc(l.url)}" target="_blank" rel="noopener"` : ''}><b>${esc(l.title)} ${l.url ? '↗' : ''}</b><span>${esc(l.desc || '')}</span></a>`).join('')}</div>`;
+  if (b.news) {
+    const n = b.news;
+    return `<div class="news"><h5>📰 ${esc(n.title)}</h5><div class="src">${esc(n.source || '')}${n.date ? ' · ' + esc(n.date) : ''}</div>
+      <p class="sum">${n.summary}</p>
+      ${n.ask ? `<p class="ask">🤔 <b>생각해 보기</b> · ${n.ask}</p>` : ''}
+      ${n.answer ? `<details ontoggle="if(this.open)autoDone('${stepId}')"><summary>생각해 본 뒤 설명 보기</summary>${n.answer}</details>` : ''}
+      ${n.url ? `<a class="btn" href="${esc(n.url)}" target="_blank" rel="noopener" onclick="autoDone('${stepId}')">원문 보기 ↗</a>` : ''}</div>`;
+  }
+  if (b.write) {
+    const k = `${unitKey}|${b.write}`, v = notes[k] ?? drafts[k] ?? '';
+    return `<div class="write"><label for="w-${esc(b.write)}">${esc(b.label || '')}</label>
+      ${b.hint ? `<div class="hint">제시어 ${b.hint.split(',').map(w => `<span>${esc(w.trim())}</span>`).join('')}</div>` : ''}
+      <textarea id="w-${esc(b.write)}" data-nk="${esc(k)}" data-step="${stepId}" placeholder="${esc(b.placeholder || '')}" oninput="drafts[this.dataset.nk]=this.value;markUnsaved(this)">${esc(v)}</textarea>
+      <div class="wrow"><button class="btn primary" onclick="saveWrite('${esc(b.write)}')">저장</button><span class="wst" id="ws-${esc(b.write)}">${notes[k] ? '저장됨' : ''}</span></div>
+      ${b.model || b.hasModel ? `<div class="model" id="md-${esc(b.write)}" style="${notes[k] && (b.model || notes[`${unitKey}|_model`]) ? 'display:block' : ''}"><div class="lab">👩‍🏫 선생님 정리와 비교해 보세요</div><div class="mtext">${b.model || esc(notes[`${unitKey}|_model`] || '')}</div>
+        <p class="tip">빠진 내용이 있다면 내 정리를 고쳐서 다시 저장해도 돼요. 고친 시각도 기록에 남아요.</p></div>` : ''}</div>`;
+  }
+  if (b.showWrite) {
+    const k = `${unitKey}|${b.showWrite}`, v = notes[k] ?? drafts[k];
+    return `<div class="shown"><div class="lab">${esc(b.label || '')}</div><div id="sw-${esc(b.showWrite)}">${v ? esc(v) : '<span style="color:var(--faint)">아직 적지 않았어요.</span>'}</div></div>`;
+  }
+  if (b.match) {
+    const m = b.match;
+    return `<div id="m-${bid}"><div class="match">${m.items.map(([lab], i) => `<span class="mk">${esc(lab)}</span>
+      <select data-i="${i}"><option value="">선택하세요</option>${m.options.map(o => `<option>${esc(o)}</option>`).join('')}</select><span data-r="${i}"></span>`).join('')}</div>
+      <button class="btn" onclick="checkMatch('${bid}')">확인하기</button>
+      <div class="callout" data-exp style="display:none;margin-top:12px"></div></div>`;
+  }
+  if (b.confuse) {
+    const cur = notes[`${unitKey}|confuse`];
+    return `<div class="cq">🤔 오늘 내용 중 가장 헷갈린 것은?</div>
+      <div class="confuse" id="cf">${b.confuse.map(c => `<button class="${cur === c ? 'on' : ''}" data-v="${esc(c)}" onclick="pickConfuse(this)">${esc(c)}</button>`).join('')}</div>`;
+  }
+  if (b.ox) {
+    const rec = notes[`${unitKey}|ox`];
+    return `<div id="ox-${bid}" data-step="${stepId}">${b.ox.map((x, i) => `<div class="oxi" data-i="${i}"><div class="row2"><div class="q">${i + 1}. ${x.q}</div>
+      <div class="bt"><button data-v="O" onclick="pickOx('${bid}',${i},this)">O</button><button data-v="X" onclick="pickOx('${bid}',${i},this)">X</button></div></div>
+      <div class="exp" style="display:none"></div></div>`).join('')}
+      <div class="oxact"><button class="btn primary" data-submit onclick="submitOx('${bid}')">제출하고 채점하기</button></div>
+      <div class="oxres" data-score>${rec ? `📌 포트폴리오에 기록된 점수: <b>${esc(rec)}</b> (첫 번째 풀이)` : ''}</div></div>`;
+  }
+  return '';
+}
+
+/* 모범 정리 열기 (서버에서 받은 글이 있으면 넣고) */
+function showModel(field, text) {
+  const md = $('md-' + field); if (!md) return;
+  const box = md.querySelector('.mtext');
+  if (text) box.textContent = text;
+  if (box.textContent.trim()) md.style.display = 'block';
+}
+
+/* 선생님 피드백 상자 */
+function fbBox(score, comment) {
+  if (!score && !comment) return '';
+  return `<div class="fb"><div class="lab">📝 선생님 피드백</div>${score ? `<b class="sc">${esc(score)}</b> / 5점 ` : ''}${comment ? `<div style="margin-top:4px">${esc(comment)}</div>` : ''}</div>`;
+}
+
+/* 헷갈린 개념 고르기 (다시 고를 수 있음) */
+window.pickConfuse = async btn => {
+  if (!session) { toast('로그인하면 기록할 수 있어요.'); openModal('login-modal'); return; }
+  const v = btn.dataset.v, k = `${curUnit.unitKey}|confuse`, prev = notes[k];
+  document.querySelectorAll('#cf button').forEach(b => b.classList.toggle('on', b === btn));
+  try {
+    const r = await api('saveNote', { unit: curUnit.unitKey, code: curUnit.u.code, field: 'confuse', text: v });
+    if (!r.ok) throw new Error(r.error);
+    notes[k] = v; toast('선생님께 전달했어요.');
+  } catch (e) {
+    document.querySelectorAll('#cf button').forEach(b => b.classList.toggle('on', b.dataset.v === prev));
+    if (e.message !== 'EXPIRED') toast('저장하지 못했어요.');
+  }
+};
+
+/* 홈: 학생 할 일 */
+function viewTodo() {
+  if (!session || session.role === '교사') return '';
+  const list = lessonUnits().map(x => ({ ...x, p: progressOf(x.s, [x.u]) })).filter(x => x.p.n < x.p.total);
+  setTimeout(loadFbNote, 0);
+  return `<div class="todo"><h2>📌 할 일</h2>
+    ${list.length ? `<ul>${list.map(x => `<li><a href="#/${x.s.id}/${encodeURIComponent(x.u.code)}"><span>${x.s.icon} ${esc(x.u.title)} <small>${esc(x.s.title)} ${esc(x.u.code)}</small></span><small>${x.p.n}/${x.p.total} 완료</small></a></li>`).join('')}</ul>`
+      : '<div class="clear">✓ 지금 할 점검을 모두 마쳤어요!</div>'}
+    <div class="fbnote" id="fbnote"></div></div>`;
+}
+async function loadFbNote() {
+  try {
+    const r = await api('myNotes'); if (!r.ok) return;
+    const got = Object.entries(r.notes || {}).filter(([, n]) => n.fbScore || n.fbComment).length;
+    const el = $('fbnote'); if (el && got) el.innerHTML = `📝 선생님 피드백이 ${got}개 있어요. <a href="#/me">내 기록에서 보기 →</a>`;
+  } catch {}
+}
+
+/* 블록 데이터 찾기 (bid = 단계id-블록번호) */
+function blockOf(bid) {
+  const i = bid.lastIndexOf('-');
+  const st = curUnit.L.steps.find(x => x.id === bid.slice(0, i));
+  return st.blocks[Number(bid.slice(i + 1))];
+}
+window.checkMatch = bid => {
+  const m = blockOf(bid).match, box = $('m-' + bid);
+  let ok = 0;
+  m.items.forEach(([, ans], i) => {
+    const v = box.querySelector(`select[data-i="${i}"]`).value, r = box.querySelector(`[data-r="${i}"]`);
+    const good = v === ans; if (good) ok++;
+    r.innerHTML = !v ? '' : good ? '<span class="res-ok">✓</span>' : '<span class="res-no">✗</span>';
+  });
+  const exp = box.querySelector('[data-exp]');
+  exp.style.display = 'block';
+  exp.innerHTML = ok === m.items.length ? `<span class="res-ok">모두 맞았어요!</span> ${m.explain || ''}` : `<span class="res-no">${m.items.length}개 중 ${ok}개 맞았어요.</span> 틀린 것을 다시 골라 보세요.`;
+};
+
+/* OX: 모두 고른 뒤 제출하면 채점 (정답은 서버에만 있어요). 처음 제출한 결과만 포트폴리오에 기록 */
+window.pickOx = (bid, i, btn) => {
+  const box = $('ox-' + bid), row = btn.closest('.oxi');
+  if (box.dataset.graded) return;
+  row.dataset.pick = btn.dataset.v;
+  row.querySelectorAll('.bt button').forEach(b => b.classList.toggle('sel', b === btn));
+};
+window.submitOx = async bid => {
+  const box = $('ox-' + bid), rows = [...box.querySelectorAll('.oxi')];
+  if (box.dataset.graded) return;
+  if (rows.some(r => !r.dataset.pick)) { toast('모든 문항에 O 또는 X를 골라 주세요.'); return; }
+  if (!session) { toast('로그인하면 채점하고 점수를 기록할 수 있어요.'); openModal('login-modal'); return; }
+  const out = box.querySelector('[data-score]'), sb = box.querySelector('[data-submit]');
+  sb.disabled = true; sb.textContent = '채점 중…';
+  try {
+    const r = await api('gradeOx', { unit: curUnit.unitKey, code: curUnit.u.code, picks: rows.map(x => x.dataset.pick) });
+    if (!r.ok) throw new Error(r.error);
+    box.dataset.graded = '1';
+    rows.forEach((row, i) => {
+      const res = r.results[i], btn = row.querySelector(`.bt button[data-v="${row.dataset.pick}"]`);
+      btn.classList.remove('sel'); btn.classList.add(res.ok ? 'pick-ok' : 'pick-no');
+      const e = row.querySelector('.exp'); e.style.display = 'block';
+      e.innerHTML = `${res.ok ? '<span class="res-ok">정답!</span>' : `<span class="res-no">아쉬워요. 정답은 ${res.a}</span>`} ${esc(res.exp || '')}`;
+    });
+    sb.parentNode.style.display = 'none';
+    const k = `${curUnit.unitKey}|ox`, retry = ` <button class="btn ghost" style="margin-left:8px" onclick="resetOx('${bid}')">다시 풀기</button>`;
+    if (r.recorded) { notes[k] = r.score; out.innerHTML = `<b>${r.score}</b> 맞았어요. 📌 포트폴리오에 기록했어요.${retry}`; autoDone(box.dataset.step); }
+    else out.innerHTML = `이번 점수 <b>${r.score}</b> · 📌 포트폴리오 기록: <b>${esc(r.kept || notes[k] || '')}</b> (첫 번째 풀이)${retry}`;
+  } catch (e) {
+    if (e.message !== 'EXPIRED') toast(e.message || '채점하지 못했어요.');
+  } finally { sb.disabled = false; sb.textContent = '제출하고 채점하기'; }
+};
+window.resetOx = bid => {
+  const box = $('ox-' + bid);
+  delete box.dataset.graded;
+  box.querySelectorAll('.oxi').forEach(row => {
+    delete row.dataset.pick;
+    row.querySelectorAll('.bt button').forEach(b => b.className = '');
+    const e = row.querySelector('.exp'); e.style.display = 'none'; e.innerHTML = '';
+  });
+  box.querySelector('.oxact').style.display = '';
+  const k = curUnit && `${curUnit.unitKey}|ox`;
+  box.querySelector('[data-score]').innerHTML = notes[k] ? `📌 포트폴리오에 기록된 점수: <b>${esc(notes[k])}</b> (첫 번째 풀이) · 다시 풀어도 기록은 바뀌지 않아요.` : '';
+};
+
+/* 단계 자동 완료 */
+window.autoDone = async stepId => {
+  if (!session || !curUnit) return;
+  const key = `${curUnit.unitKey}|${stepId}`;
+  if (done.has(key)) return;
+  done.add(key); refreshDone();
+  try { const r = await api('mark', { key, on: true }); if (!r.ok) throw new Error(r.error); }
+  catch { done.delete(key); refreshDone(); }
+};
+
+/* 글 저장 */
+function markUnsaved(ta) { const st = $('ws-' + ta.id.slice(2)); if (st) st.textContent = '저장 안 됨'; }
+window.saveWrite = async field => {
+  const ta = $('w-' + field), st = $('ws-' + field), k = ta.dataset.nk;
+  if (!session) { toast('로그인하면 내가 쓴 글을 저장할 수 있어요.'); openModal('login-modal'); return; }
+  const text = ta.value.trim();
+  if (!text) { st.textContent = '내용을 적고 저장해 주세요.'; return; }
+  st.textContent = '저장 중…';
+  try {
+    const r = await api('saveNote', { unit: curUnit.unitKey, code: curUnit.u.code, field, text });
+    if (!r.ok) throw new Error(r.error);
+    notes[k] = text; delete drafts[k];
+    st.textContent = '저장됨 · 포트폴리오에 기록했어요';
+    showModel(field, r.model);
+    const sw = $('sw-' + field); if (sw) sw.textContent = text;
+    autoDone(ta.dataset.step);
+  } catch (e) { if (e.message !== 'EXPIRED') st.textContent = '저장하지 못했어요. 다시 눌러 주세요.'; }
+};
+async function loadNotes(s, u) {
+  if (!session) return;
+  const unitKey = `${s.id}|${u.code}`;
+  try {
+    const r = await api('notes', { unit: unitKey, code: u.code });
+    if (!r.ok || !curUnit || curUnit.unitKey !== unitKey) return;
+    Object.entries(r.notes || {}).forEach(([field, text]) => {
+      const k = `${unitKey}|${field}`; notes[k] = text;
+      const ta = $('w-' + field);
+      if (ta && !drafts[k] && document.activeElement !== ta) { ta.value = text; const st = $('ws-' + field); if (st) st.textContent = '저장됨'; }
+      const sw = $('sw-' + field); if (sw && text) sw.textContent = text;
+    });
+    if (r.notes.summary) showModel('summary', r.notes._model);
+    const fb = $('lesson-fb'); if (fb) fb.innerHTML = fbBox(r.notes.fbScore, r.notes.fbComment);
+    if (r.notes.confuse) document.querySelectorAll('#cf button').forEach(b => b.classList.toggle('on', b.dataset.v === r.notes.confuse));
+    if (r.notes && r.notes.ox) document.querySelectorAll('[data-score]').forEach(el => { if (!el.textContent.trim()) el.innerHTML = `📌 포트폴리오에 기록된 점수: <b>${esc(r.notes.ox)}</b> (첫 번째 풀이)`; });
+  } catch {}
+}
+
+/* 완료 표시만 바꾸기 (쓴 글·푼 문제가 지워지지 않게) */
+function refreshDone() {
+  if (!document.querySelector('.lesson')) { route(); return; }
+  document.querySelectorAll('.lstep').forEach((sec, i) => {
+    const on = done.has(sec.dataset.sk);
+    sec.classList.toggle('done', on);
+    sec.querySelector('.lhead .num').textContent = on ? '✓' : i + 1;
+  });
+  const pg = $('lesson-prog'); if (pg && curUnit) pg.innerHTML = bar(progressOf(curUnit.s, [curUnit.u]));
+}
+
+/* ============================================================
+   내 기록 (포트폴리오) — 단원별 개념 정리와 OX 점수 모아 보기
+   ============================================================ */
+function viewPortfolio() {
+  if (!session) return `<div class="crumbs"><a href="#/">홈</a> › 내 기록</div><h1>내 기록</h1>
+    <p class="lead">로그인하면 단원별로 내가 정리한 개념과 OX 점수를 모아 볼 수 있어요.</p>
+    <button class="btn primary" onclick="openLogin()">로그인</button>`;
+  setTimeout(loadPortfolio, 0);
+  return `<div class="crumbs"><a href="#/">홈</a> › 내 기록</div>
+    <h1>📁 ${esc(session.name)}의 학습 포트폴리오</h1>
+    <p class="lead">단원마다 내가 정리한 개념과 OX 점수가 모여요. 수행평가 때 선생님도 같은 기록을 봐요.</p>
+    <div id="pf">불러오는 중…</div>
+    <p style="margin-top:28px"><button class="btn ghost" onclick="openPw()">🔑 비밀번호 바꾸기</button></p>`;
+}
+async function loadPortfolio() {
+  let all = {};
+  try { const r = await api('myNotes'); if (r.ok) all = r.notes || {}; } catch { }
+  const box = $('pf'); if (!box) return;
+  const html = SUBJECTS.map(s => {
+    const units = allUnits(s).filter(u => u.lesson && LESSONS[u.lesson]);
+    if (!units.length) return '';
+    return `<h2 style="color:${sc(s)}">${s.icon} ${esc(s.title)}</h2>
+      <div class="pf-list">${units.map(u => {
+        const n = all[`${s.id}|${u.code}`] || {}, p = progressOf(s, [u]);
+        const summary = n.summary;
+        return `<a class="pf-card" href="#/${s.id}/${encodeURIComponent(u.code)}" style="--c:${sc(s)}">
+          <div class="pf-top"><div><div class="code">${esc(u.code)}</div><b>${esc(u.title)}</b></div>
+            <div class="pf-score">${n.ox ? `OX <b>${esc(n.ox)}</b>` : '<span style="color:var(--faint)">OX 미응시</span>'}</div></div>
+          <div class="pf-sum">${summary ? esc(summary) : '<span style="color:var(--faint)">아직 개념 정리를 하지 않았어요.</span>'}</div>
+          ${n.fbScore || n.fbComment ? `<div style="margin-top:10px">${fbBox(n.fbScore, n.fbComment)}</div>` : ''}
+          ${bar(p, false)}
+        </a>`;
+      }).join('')}</div>`;
+  }).join('');
+  box.innerHTML = html || '<p>아직 점검할 단원이 없어요.</p>';
+}
+
+/* ============================================================
+   선생님 대시보드 (역할이 '교사'인 계정만)
+   - 개념 정리 모아 읽기 · 문항별 정답률 · 학생별 포트폴리오
+   ============================================================ */
+const isTeacher = () => session && session.role === '교사';
+let dashData = null;                         // { students, notes }
+const dashState = { unit: '', cls: '', tab: 'read', student: '', onlyMissing: false };
+
+const lessonUnits = () => SUBJECTS.flatMap(s => allUnits(s).filter(u => u.lesson && LESSONS[u.lesson]).map(u => ({ s, u, key: `${s.id}|${u.code}`, L: LESSONS[u.lesson] })));
+const classOf = id => /^\d{5}$/.test(id) ? `${id[0]}학년 ${Number(id.slice(1, 3))}반` : '기타';
+const oxBlockOf = L => L.steps.flatMap(st => st.blocks).find(b => b.ox);
+function fmtTime(t) {
+  if (!t) return '';
+  const d = new Date(t);
+  if (isNaN(d)) return String(t).replace(/:\d\d$/, '');
+  return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+function noteOf(id, unit, field) { return dashData.notes.find(n => n.id === id && n.unit === unit && n.field === field); }
+
+function viewDash() {
+  if (!isTeacher()) return `<div class="crumbs"><a href="#/">홈</a> › 대시보드</div><h1>선생님 대시보드</h1>
+    <p class="lead">선생님 계정으로 로그인해야 볼 수 있어요.</p>${session ? '' : '<button class="btn primary" onclick="openLogin()">로그인</button>'}`;
+  if (!dashData) { setTimeout(loadDash, 0); return `<h1>📊 선생님 대시보드</h1><p class="lead">기록을 불러오는 중…</p>`; }
+  const units = lessonUnits();
+  if (!dashState.unit && units.length) dashState.unit = units[0].key;
+  const classes = [...new Set(dashData.students.map(s => classOf(s.id)))].sort();
+  return `<div class="dash">
+    <div class="dash-top">
+      <h1>📊 선생님 대시보드</h1>
+      <div class="dash-tools">
+        ${typeof SHEET_URL !== 'undefined' && SHEET_URL ? `<a class="btn" href="${esc(SHEET_URL)}" target="_blank" rel="noopener">구글 시트 열기 ↗</a>` : ''}
+        <button class="btn" onclick="dashData=null;route()">↻ 새로고침</button>
+      </div>
+    </div>
+    <div class="dash-filters">
+      <label>단원 <select onchange="dashState.unit=this.value;renderDash()">${units.map(x => `<option value="${esc(x.key)}" ${x.key === dashState.unit ? 'selected' : ''}>${esc(x.s.title)} ${esc(x.u.code)} ${esc(x.u.title)}</option>`).join('')}</select></label>
+      <label>반 <select onchange="dashState.cls=this.value;dashState.student='';renderDash()"><option value="">전체</option>${classes.map(c => `<option ${c === dashState.cls ? 'selected' : ''}>${c}</option>`).join('')}</select></label>
+    </div>
+    <div id="dash-body">${dashBody()}</div>
+  </div>`;
+}
+window.renderDash = () => { const b = $('dash-body'); if (b) b.innerHTML = dashBody(); };
+window.setDash = (k, v) => { dashState[k] = v; renderDash(); };
+
+function dashBody() {
+  const x = lessonUnits().find(v => v.key === dashState.unit);
+  if (!x) return '<p>점검 단원이 아직 없어요.</p>';
+  const studs = dashData.students.filter(s => !dashState.cls || classOf(s.id) === dashState.cls).sort((a, b) => a.id.localeCompare(b.id));
+  const sub = studs.filter(s => noteOf(s.id, x.key, 'summary')).length;
+  const oxs = studs.map(s => noteOf(s.id, x.key, 'ox')).filter(Boolean);
+  const avg = oxs.length ? (oxs.reduce((a, n) => { const [g, t] = n.text.split('/').map(Number); return a + (t ? g / t : 0); }, 0) / oxs.length * 100).toFixed(0) : '-';
+  const fbs = studs.map(s => noteOf(s.id, x.key, 'fbScore')).filter(n => n && n.text !== '');
+  const fbAvg = fbs.length ? (fbs.reduce((a, n) => a + Number(n.text), 0) / fbs.length).toFixed(1) : '-';
+  const tabs = [['read', '✍️ 개념 정리 모아 읽기 · 채점'], ['items', '📈 문항별 정답률'], ['student', '👤 학생별 포트폴리오']];
+  return `
+    <div class="tiles four">
+      <div class="tile"><span>개념 정리 제출</span><b>${sub}<small> / ${studs.length}명</small></b></div>
+      <div class="tile"><span>OX 응시</span><b>${oxs.length}<small> / ${studs.length}명</small></b></div>
+      <div class="tile"><span>OX 평균 정답률</span><b>${avg}<small>${avg === '-' ? '' : '%'}</small></b></div>
+      <div class="tile" id="fb-tile"><span>개념 정리 평균 (${fbs.length}명 채점)</span><b>${fbAvg}<small>${fbAvg === '-' ? '' : ' / 5'}</small></b></div>
+    </div>
+    <div class="tabs">${tabs.map(([k, t]) => `<button class="${dashState.tab === k ? 'on' : ''}" onclick="setDash('tab','${k}')">${t}</button>`).join('')}</div>
+    ${dashState.tab === 'read' ? dashRead(x, studs) : dashState.tab === 'items' ? dashItems(x, studs) : dashStudent(studs)}`;
+}
+
+/* ① 개념 정리 모아 읽기 */
+function dashRead(x, studs) {
+  const list = dashState.onlyMissing ? studs.filter(s => !noteOf(s.id, x.key, 'summary')) : studs;
+  return `<label class="chk"><input type="checkbox" ${dashState.onlyMissing ? 'checked' : ''} onchange="setDash('onlyMissing',this.checked)"> 미제출 학생만 보기</label>
+    <div class="rows">${list.map(s => {
+      const sm = noteOf(s.id, x.key, 'summary'), ox = noteOf(s.id, x.key, 'ox');
+      const times = sm ? (fmtTime(sm.first) === fmtTime(sm.last) ? `제출 ${fmtTime(sm.first)}` : `처음 ${fmtTime(sm.first)} · 수정 ${fmtTime(sm.last)}`) : '';
+      return `<div class="drow ${sm ? '' : 'miss'}">
+        <div class="who"><b>${esc(s.name)}</b><span>${esc(s.id)}</span></div>
+        <div class="txt">${sm ? esc(sm.text) : '미제출'}${times ? `<div class="tm">${times}</div>` : ''}${fbForm(s.id, x.key)}</div>
+        <div class="sc">${ox ? `OX <b>${esc(ox.text)}</b>` : '<span class="muted">OX -</span>'}</div>
+      </div>`;
+    }).join('') || '<p class="muted">해당하는 학생이 없어요.</p>'}</div>`;
+}
+
+function fbForm(sid, unit) {
+  const sc0 = (noteOf(sid, unit, 'fbScore') || {}).text || '', cm = (noteOf(sid, unit, 'fbComment') || {}).text || '';
+  return `<div class="fbx" data-sid="${esc(sid)}">
+    <select data-f="score" aria-label="점수"><option value="">점수</option>${[5, 4, 3, 2, 1, 0].map(n => `<option ${String(n) === sc0 ? 'selected' : ''}>${n}</option>`).join('')}</select>
+    <input data-f="comment" value="${esc(cm)}" placeholder="학생에게 보일 한 줄 코멘트" maxlength="300" onkeydown="if(event.key==='Enter')saveFb(this)">
+    <button class="btn" onclick="saveFb(this)">저장</button><span class="st">${sc0 || cm ? '저장됨' : ''}</span></div>`;
+}
+window.saveFb = async el => {
+  const box = el.closest('.fbx'), sid = box.dataset.sid, st = box.querySelector('.st');
+  const score = box.querySelector('[data-f="score"]').value, comment = box.querySelector('[data-f="comment"]').value.trim();
+  st.textContent = '저장 중…';
+  try {
+    const r = await api('feedback', { sid, unit: dashState.unit, score, comment });
+    if (!r.ok) throw new Error(r.error);
+    [['fbScore', score], ['fbComment', comment]].forEach(([f, v]) => {
+      const n = noteOf(sid, dashState.unit, f);
+      if (n) n.text = v; else dashData.notes.push({ id: sid, unit: dashState.unit, field: f, text: v });
+    });
+    st.textContent = '저장됨';
+    const t = $('fb-tile'), tmp = document.createElement('div');   // 평균 점수 칸만 다시 계산
+    tmp.innerHTML = dashBody(); const nt = tmp.querySelector('#fb-tile'); if (t && nt) t.innerHTML = nt.innerHTML;
+  } catch (e) { if (e.message !== 'EXPIRED') st.textContent = '저장 실패'; }
+};
+
+/* ② 문항별 정답률 */
+function dashItems(x, studs) {
+  const qs = (oxBlockOf(x.L) || { ox: [] }).ox;
+  const det = studs.map(s => noteOf(s.id, x.key, 'oxDetail')).filter(Boolean).map(n => n.text);
+  if (!det.length) return '<p class="muted">아직 OX를 푼 학생이 없어요.</p>' + confuseStats(x, studs);
+  return `<p class="muted" style="margin:0 0 12px">${det.length}명 응시 · 정답률이 낮은 문항은 빨간색으로 표시돼요.</p>
+    <div class="items">${qs.map((q, i) => {
+      const n = det.filter(d => d[i] === '1').length, pct = Math.round(n / det.length * 100);
+      return `<div class="item ${pct < 60 ? 'low' : ''}">
+        <div class="iq">${i + 1}. ${q.q} <span class="ans">정답 ${q.a !== undefined ? (q.a ? 'O' : 'X') : (((dashData.oxKey || {})[x.u.code] || [])[i] || '?')}</span></div>
+        <div class="ibar"><i style="width:${pct}%"></i></div>
+        <div class="ip"><b>${pct}%</b> <span>${n}/${det.length}명</span></div>
+      </div>`;
+    }).join('')}</div>${confuseStats(x, studs)}`;
+}
+
+function confuseStats(x, studs) {
+  const blk = x.L.steps.flatMap(st => st.blocks).find(b => b.confuse);
+  if (!blk) return '';
+  const picks = studs.map(s => noteOf(s.id, x.key, 'confuse')).filter(Boolean).map(n => n.text);
+  if (!picks.length) return '<h2>🤔 학생들이 헷갈린 개념</h2><p class="muted">아직 고른 학생이 없어요.</p>';
+  const max = Math.max(...blk.confuse.map(c => picks.filter(p => p === c).length));
+  return `<h2>🤔 학생들이 헷갈린 개념 <small class="muted" style="font-size:14px;font-weight:500">${picks.length}명 응답</small></h2>
+    <div class="items">${blk.confuse.map(c => {
+      const n = picks.filter(p => p === c).length, pct = Math.round(n / picks.length * 100);
+      return `<div class="item ${n && n === max && !c.includes('없음') ? 'low' : ''}"><div class="iq">${esc(c)}</div><div class="ibar"><i style="width:${pct}%"></i></div><div class="ip"><b>${n}명</b> <span>${pct}%</span></div></div>`;
+    }).join('')}</div>`;
+}
+
+/* ③ 학생별 포트폴리오 */
+function dashStudent(studs) {
+  if (!dashState.student || !studs.find(s => s.id === dashState.student)) dashState.student = studs[0] ? studs[0].id : '';
+  const st = studs.find(s => s.id === dashState.student);
+  return `<label class="pick">학생 <select onchange="setDash('student',this.value)">${studs.map(s => `<option value="${esc(s.id)}" ${s.id === dashState.student ? 'selected' : ''}>${esc(s.id)} ${esc(s.name)}</option>`).join('')}</select></label>
+    ${!st ? '' : `<div class="pf-list">${lessonUnits().map(x => {
+      const sm = noteOf(st.id, x.key, 'summary'), ox = noteOf(st.id, x.key, 'ox'), d = noteOf(st.id, x.key, 'oxDetail');
+      return `<div class="pf-card" style="--c:${sc(x.s)}">
+        <div class="pf-top"><div><div class="code">${esc(x.s.title)} ${esc(x.u.code)}</div><b>${esc(x.u.title)}</b></div>
+          <div class="pf-score">${ox ? `OX <b>${esc(ox.text)}</b>${d ? `<div class="oxd">${[...d.text].map(c => c === '1' ? '○' : '×').join(' ')}</div>` : ''}` : '<span class="muted">OX 미응시</span>'}</div></div>
+        <div class="pf-sum">${sm ? esc(sm.text) : '<span class="muted">개념 정리 미제출</span>'}</div>
+        ${sm ? `<div class="tm">처음 ${fmtTime(sm.first)}${fmtTime(sm.first) !== fmtTime(sm.last) ? ` · 수정 ${fmtTime(sm.last)}` : ''}</div>` : ''}
+        ${noteOf(st.id, x.key, 'confuse') ? `<div class="tm">🤔 헷갈린 개념: ${esc(noteOf(st.id, x.key, 'confuse').text)}</div>` : ''}
+        ${dashState.unit === x.key ? fbForm(st.id, x.key) : fbBox((noteOf(st.id, x.key, 'fbScore') || {}).text, (noteOf(st.id, x.key, 'fbComment') || {}).text)}
+      </div>`;
+    }).join('')}</div>`}`;
+}
+
+async function loadDash() {
+  try {
+    const r = await api('dash');
+    if (!r.ok) throw new Error(r.error);
+    dashData = { students: r.students || [], notes: r.notes || [], oxKey: r.oxKey || {} };
+    if (location.hash.startsWith('#/dash')) route();
+  } catch (e) {
+    if (e.message !== 'EXPIRED') $('app').innerHTML = `<h1>📊 선생님 대시보드</h1><p class="lead">기록을 불러오지 못했어요. (${esc(e.message)})</p>`;
+  }
+}
+
+/* 주소(#/과목/단원)에 따라 화면 고르기 */
+function route() {
+  const [sid, code] = location.hash.replace(/^#\/?/, '').split('/').map(decodeURIComponent);
+  const s = sid && subjectById(sid);
+  const u = s && code && allUnits(s).find(x => x.code === code);
+  curUnit = null;
+  if (sid === 'me') { $('app').innerHTML = viewPortfolio(); return; }
+  if (sid === 'dash') { $('app').innerHTML = viewDash(); return; }
+  if (u && u.lesson) {
+    $('app').innerHTML = viewLesson(s, u, LESSONS[u.lesson]);
+    loadNotes(s, u);
+    return;
+  }
+  $('app').innerHTML = u ? viewUnit(s, u) : s ? viewSubject(s) : viewHome();
+}
+let lastHash = location.hash;
+window.addEventListener('hashchange', () => { route(); if (location.hash !== lastHash) window.scrollTo(0, 0); lastHash = location.hash; });
+
+let toastTimer;
+function toast(msg) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+/* ---------- 시작 ---------- */
+renderUser();
+loadContent().then(route);
+if (session) {   // 저장된 출입증으로 기록 불러오기
+  api('progress').then(r => { if (r.ok) { done = new Set(r.done || []); route(); } }).catch(() => {});
+}
+</script>
+</body>
+</html>
