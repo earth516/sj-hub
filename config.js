@@ -10,10 +10,10 @@
 /* ① Apps Script 웹 앱 주소
    - 비워 두면 "체험 모드"로 동작합니다. (학번 10101 / 비밀번호 1234 로 로그인, 기록은 이 브라우저에만 저장)
    - Apps Script 를 배포한 뒤 주소(…/exec)를 따옴표 안에 붙여 넣으면 구글 시트와 연결됩니다. */
-const API_URL = '';
+const API_URL = 'https://script.google.com/macros/s/AKfycbx0RS80yfx1npxQPXj11qH8FqgBTMMGIF7plfSYky0VOk3OqXVHLQMxAn3ifrPiY1ZM_w/exec';
 
 /* ①-2 선생님 대시보드에서 바로 열 구글 시트 주소 (비워 두면 버튼이 안 보여요) */
-const SHEET_URL = '';
+const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1CVDoUbQAIG7iahbFCZGqpx9TO9g20FdU9dMnoc4g0aQ/edit';
 
 /* ② 사이트 기본 정보 */
 const SITE = {
