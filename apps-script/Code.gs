@@ -44,7 +44,7 @@ function setup() {
   let sh = ss.getSheetByName(SHEET_STUDENTS);
   if (!sh) {
     sh = ss.insertSheet(SHEET_STUDENTS);
-    sh.appendRow(['학번', '이름', '비밀번호', '역할', '과목']);
+    sh.appendRow(['학번', '이름', '비밀번호', '역할', '과목', '반']);
     sh.appendRow(['teacher', '이상준', '바꿔주세요', TEACHER]);
     sh.appendRow(['10101', '홍길동', '1234', '']);
     sh.getRange('A:A').setNumberFormat('@');   // 학번을 글자로 (앞자리 0 유지)
@@ -54,6 +54,7 @@ function setup() {
     sh.getRange(1, 4).setValue('역할');          // 기존 명단에는 '역할' 칸만 추가
   }
   if (sh.getRange(1, 5).getValue() === '') sh.getRange(1, 5).setValue('과목');   // 기존 명단에는 '과목' 칸 추가
+  if (sh.getRange(1, 6).getValue() === '') sh.getRange(1, 6).setValue('반');     // 기존 명단에는 '반' 칸 추가 (비워 두면 학번에서 자동)
   if (!ss.getSheetByName(SHEET_PROGRESS)) {
     const p = ss.insertSheet(SHEET_PROGRESS);
     p.appendRow(['학번', '이름', '활동', '완료 시각']);
@@ -300,8 +301,8 @@ function login(req) {
 
   // 출입증(토큰) 발급 — 사이트는 비밀번호 대신 이 값을 들고 다녀요
   const token = Utilities.getUuid();
-  cache.put('tok_' + token, JSON.stringify({ id: st.id, name: st.name, role: st.role, subj: st.subj, cls: classOf(st.id) }), TOKEN_HOURS * 3600);
-  return { ok: true, token, id: st.id, name: st.name, role: st.role, subj: st.subj, done: getDone(st.id) };
+  cache.put('tok_' + token, JSON.stringify({ id: st.id, name: st.name, role: st.role, subj: st.subj, cls: st.cls || classOf(st.id) }), TOKEN_HOURS * 3600);
+  return { ok: true, token, id: st.id, name: st.name, role: st.role, subj: st.subj, cls: st.cls || classOf(st.id), done: getDone(st.id) };
 }
 
 /* 출입증 확인 후 작업 실행 */
@@ -318,7 +319,7 @@ function readStudents() {
   const rows = SpreadsheetApp.getActive().getSheetByName(SHEET_STUDENTS).getDataRange().getDisplayValues();
   return rows.slice(1).filter(r => String(r[0]).trim()).map((r, i) => ({
     row: i + 2, id: String(r[0]).trim(), name: String(r[1]).trim(), pw: String(r[2]).trim(), role: String(r[3] || '').trim(),
-    subj: String(r[4] || '').trim(),
+    subj: String(r[4] || '').trim(), cls: String(r[5] || '').trim(),   // 반 칸이 있으면 학번 대신 그 이름으로 반을 인식해요 (예: 방과후A)
   }));
 }
 function findStudent(id) { return readStudents().find(s => s.id === id) || null; }
@@ -402,7 +403,7 @@ function writeNote(id, name, unit, field, text) {
 
 /* ---------- 교사 대시보드 자료 ---------- */
 function dash() {
-  const students = readStudents().filter(s => s.role !== TEACHER).map(s => ({ id: s.id, name: s.name }));
+  const students = readStudents().filter(s => s.role !== TEACHER).map(s => ({ id: s.id, name: s.name, cls: s.cls || classOf(s.id) }));
   const oxKey = {};   // 문항별 정답 (선생님 화면에만)
   readTable(T_OX).sort((a, b) => Number(a['번호']) - Number(b['번호'])).forEach(o => (oxKey[o['단원코드']] = oxKey[o['단원코드']] || []).push(normOX(o['정답'])));
   return { ok: true, students, notes: readNotes(), oxKey };
@@ -478,6 +479,7 @@ function isOpenFor(code, user, open) {
 /* 사이트에 보낼 내용: 학생의 과목만 남기고, 안 열린 단원은 제목만 보내요 */
 function contentFor(user) {
   const data = getContent();
+  if (!user) return { ok: true, units: [], at: data.at };   // 로그인 전에는 내용을 보내지 않아요
   const open = readOpen();
   const subj = user && user.role !== TEACHER && user.subj ? user.subj.split(/[,\s]+/).filter(Boolean) : null;
   const units = data.units.filter(u => !subj || subj.some(x => u.subject === x || u.subject.indexOf(x) === 0)).map(u => {
@@ -491,7 +493,7 @@ function contentFor(user) {
 function buildOpenSheet() {
   const ss = SpreadsheetApp.getActive();
   const old = readOpen();
-  const classes = [...new Set([...old.classes, ...readStudents().filter(s => s.role !== TEACHER).map(s => classOf(s.id))])].sort();
+  const classes = [...new Set([...old.classes, ...readStudents().filter(s => s.role !== TEACHER).map(s => s.cls || classOf(s.id))])].sort();
   const units = readTable(T_UNITS).filter(u => u['단원코드'] && u['공개'] !== 'X')
     .sort((a, b) => a['단원코드'].localeCompare(b['단원코드'], 'ko', { numeric: true }));
   const bySubj = {};

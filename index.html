@@ -63,6 +63,15 @@ h2{font-size:16px;margin:28px 0 10px;font-weight:700}
 .muted{color:var(--faint)}
 
 /* 홈 · 과목 */
+.gate{max-width:480px;margin:9vh auto 0;text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px}
+.gate-ic{width:64px;height:64px;border-radius:18px;display:grid;place-items:center;background:color-mix(in srgb,var(--sea) 15%,transparent);color:var(--sea)}
+.gate-ic svg{width:34px;height:34px}
+.hub3{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin:6px 0 20px}
+.hub{display:flex;flex-direction:column;gap:6px;padding:20px 18px;background:var(--surface);border:1px solid var(--line);border-radius:16px;text-decoration:none;color:inherit;transition:transform .18s,border-color .18s,box-shadow .18s}
+.hub:hover{transform:translateY(-2px);border-color:var(--c,var(--sea));box-shadow:0 6px 18px color-mix(in srgb,var(--c,var(--sea)) 18%,transparent)}
+.hub svg{width:30px;height:30px;color:var(--c,var(--sea));margin-bottom:4px}
+.hub h3{margin:0;font-size:1.15em}
+.hub p{margin:0;font-size:.88em;color:var(--faint)}
 .subjs{display:flex;flex-direction:column;gap:10px}
 .subj{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:14px;text-decoration:none;transition:border-color .15s,background .15s}
 .subj:hover{border-color:var(--c);background:var(--raise)}
@@ -741,7 +750,7 @@ $('login-form').onsubmit = async e => {
   try {
     const r = await api('login', { id, pw });
     if (!r.ok) throw new Error(r.error || '로그인에 실패했어요.');
-    session = { token: r.token, id: r.id, name: r.name, role: r.role || '' };
+    session = { token: r.token, id: r.id, name: r.name, role: r.role || '', subj: r.subj || '' };
     lsSet(LS_SESSION, session); lsSet('sjhub.lastId', r.id);
     done = new Set(r.done || []); loadDrafts();
     $('login-modal').classList.remove('show');
@@ -881,28 +890,62 @@ const posOf = key => (lsGet('sjhub.pos') || {})[key] || 0;
    ============================================================ */
 const lk = (url, icon, title, desc) => `<a class="lk" href="${esc(url)}" target="_blank" rel="noopener">${ic(icon)}<div><b>${title}</b><span>${desc}</span></div></a>`;
 
+/* 내 과목 — 교사이거나 과목 칸이 비어 있으면 전부, 아니면 학생명단의 과목만 ('통합과학'은 1·2 모두) */
+function mySubjects() {
+  const want = session && !isTeacher() ? String(session.subj || '').split(/[,\s]+/).filter(Boolean) : [];
+  return want.length ? SUBJECTS.filter(s => want.some(x => s.title === x || s.title.indexOf(x) === 0)) : SUBJECTS;
+}
+
+/* 로그인 전 첫 화면 */
+let gateShown = false;
+function viewGate() {
+  if (!gateShown) { gateShown = true; setTimeout(() => openModal('login-modal'), 60); }
+  return `<div class="gate">
+    <div class="gate-ic">${ic('atom')}</div>
+    <h1>${esc(SITE.title)}</h1>
+    <p class="lead">학번과 비밀번호로 로그인하면 내 과목의 개념 정리, 실험실, 문제풀이를 볼 수 있어요.</p>
+    ${DEMO ? `<div class="banner"><b>체험 모드</b> · 학생은 <b>10101</b> / <b>1234</b>, 선생님은 <b>teacher</b> / <b>1234</b>로 로그인해 볼 수 있어요.</div>` : ''}
+    <button class="btn primary" onclick="openLogin()">로그인</button>
+  </div>`;
+}
+
 function viewHome() {
   return `
-    ${DEMO ? `<div class="banner"><b>체험 모드</b> · 아직 구글 시트와 연결되지 않았어요. 학생은 <b>10101</b> / <b>1234</b>, 선생님은 <b>teacher</b> / <b>1234</b>로 로그인해 볼 수 있고, 기록은 이 브라우저에만 저장돼요.</div>` : ''}
+    ${DEMO ? `<div class="banner"><b>체험 모드</b> · 아직 구글 시트와 연결되지 않았어요. 기록은 이 브라우저에만 저장돼요.</div>` : ''}
+    <div class="hub3">
+      <a class="hub" href="#/study" style="--c:var(--sea)">${ic('book')}<h3>개념 정리</h3><p>읽고 · 빈칸 · 서술형 · OX로 점검해요</p></a>
+      <a class="hub" href="${esc(LINKS.lab)}" target="_blank" rel="noopener" style="--c:#e0a458">${ic('flask')}<h3>내 실험실</h3><p>디지털 실험실 · 활동 보고서</p></a>
+      <a class="hub" href="#/quiz" style="--c:#6bbf8e">${ic('target')}<h3>문제풀이</h3><p>문제은행에서 문제 풀기</p></a>
+    </div>
     ${viewTodo()}
-    <h2>과목</h2>
+    <h2>바로가기</h2>
+    <div class="links">${lk(LINKS.notes, 'video', '개념노트 영상', '유튜브 재생목록')}</div>`;
+}
+
+/* 개념 정리: 내 과목 목록 */
+function viewStudy() {
+  const list = mySubjects().filter(s => isTeacher() || allUnits(s).length);
+  return `<div class="crumbs"><a href="#/">홈</a>${ic('right')}개념 정리</div>
+    <h1>개념 정리</h1>
     <div class="subjs">
-      ${SUBJECTS.map(s => {
+      ${list.length ? list.map(s => {
         const p = progressOf(s, allUnits(s)), n = allUnits(s).length;
         return `<a class="subj" href="#/${s.id}" style="--c:${sc(s)}">
           <div class="tile-ic">${subjIcon(s)}</div>
           <div class="t"><h3>${esc(s.title)}</h3><p>${esc(s.desc)}</p></div>
-          <div class="go">${session && p.total ? ring(p.pct) : `${n}개 단원`}${ic('right')}</div>
+          <div class="go">${p.total ? ring(p.pct) : `${n}개 단원`}${ic('right')}</div>
         </a>`;
-      }).join('')}
-    </div>
-    <h2>바로가기</h2>
-    <div class="links">
-      ${lk(LINKS.lab, 'flask', 'SJ SCIENCE LAB', '디지털 실험실 · 활동 보고서')}
-      ${lk(LINKS.earthBank, 'globe', '지구과학 문제은행', '문제풀기 · 빈칸 · OX · 서술형')}
-      ${lk(LINKS.intBank, 'atom', '통합과학 문제은행', '문제풀기 · 기출 · 빈칸 · OX')}
-      ${lk(LINKS.notes, 'video', '개념노트 영상', '유튜브 재생목록')}
+      }).join('') : `<div class="banner">아직 볼 수 있는 과목이 없어요. 선생님께 과목이 등록되어 있는지 물어봐 주세요.</div>`}
     </div>`;
+}
+
+/* 문제풀이: 내 과목의 문제은행 */
+function viewQuiz() {
+  const seen = {}, banks = [];
+  mySubjects().forEach(s => { if (!s.bank) return; (seen[s.bank] = seen[s.bank] || (banks.push({ url: s.bank, names: [], s }), banks[banks.length - 1])).names.push(s.title); });
+  return `<div class="crumbs"><a href="#/">홈</a>${ic('right')}문제풀이</div>
+    <h1>문제풀이</h1>
+    <div class="links">${banks.length ? banks.map(b => lk(b.url, 'target', `${b.names.join(' · ')} 문제은행`, '문제풀기 · 빈칸 · OX · 서술형')).join('') : '<div class="banner">연결된 문제은행이 없어요.</div>'}</div>`;
 }
 
 /* 홈: 학생 할 일 + 내 현황 */
@@ -1060,7 +1103,8 @@ function buildLesson(x, s) {
   const steps = [{ id: 'concept', type: 'concept', title: '개념 정리', blocks: [
     ...(x.img ? [{ img: x.img, caption: x.imgCaption }] : []),
     ...(x.points.length ? [{ list: x.points.map(md) }] : []),
-    { write: 'summary', label: '핵심 개념을 내 말로 2~3문장 정리해 보세요.', hint: x.hint, placeholder: '제시어를 넣어 정리해 보세요.', hasModel: x.hasModel },
+    // 빈칸 채우기·서술형이 있는 단원은 '내 말로 정리' 쓰기를 빼요 (그 단계들이 대신해요)
+    ...((x.blanks || []).length || (x.essays || []).length ? [] : [{ write: 'summary', label: '핵심 개념을 내 말로 2~3문장 정리해 보세요.', hint: x.hint, placeholder: '제시어를 넣어 정리해 보세요.', hasModel: x.hasModel }]),
   ] }];
   if ((x.blanks || []).length) steps.push({ id: 'blank', type: 'blank', title: '빈칸 채우기', blocks: [{ blank: x.blanks.map(b => ({ q: b.q })) }] });
   if ((x.essays || []).length) steps.push({ id: 'essay', type: 'essay', title: '서술형', blocks: x.essays.map(e => ({ write: 'essay' + e.n, label: e.q, hint: e.hint, placeholder: '핵심 용어를 넣어 문장으로 써 보세요.', hasModel: true })) });
@@ -1748,7 +1792,7 @@ function fmtTime(t) {
   return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 function noteOf(id, unit, field) { return dashData.notes.find(n => n.id === id && n.unit === unit && n.field === field); }
-const curStuds = () => dashData.students.filter(s => !dashState.cls || classOf(s.id) === dashState.cls).sort((a, b) => a.id.localeCompare(b.id));
+const curStuds = () => dashData.students.filter(s => !dashState.cls || (s.cls || classOf(s.id)) === dashState.cls).sort((a, b) => a.id.localeCompare(b.id));
 
 function viewDash() {
   if (!isTeacher()) return `<div class="crumbs"><a href="#/">홈</a>${ic('right')}대시보드</div><h1>선생님 대시보드</h1>
@@ -1756,7 +1800,7 @@ function viewDash() {
   if (!dashData) { setTimeout(loadDash, 0); return `<h1>선생님 대시보드</h1><p class="lead">기록을 불러오는 중…</p>`; }
   const units = lessonUnits();
   if (!dashState.unit && units.length) dashState.unit = units[0].key;
-  const classes = [...new Set(dashData.students.map(s => classOf(s.id)))].sort();
+  const classes = [...new Set(dashData.students.map(s => s.cls || classOf(s.id)))].sort();
   return `<div class="dash">
     <div class="dash-top">
       <h1>선생님 대시보드</h1>
@@ -2008,10 +2052,13 @@ function route() {
   const s = sid && subjectById(sid);
   const u = s && code && allUnits(s).find(x => x.code === code);
   curUnit = null;
+  if (!session) { document.body.classList.remove('lesson-mode'); sky.set(true); $('app').innerHTML = viewGate(); return; }
   const isLesson = !!(u && u.lesson);
   document.body.classList.toggle('lesson-mode', isLesson);
   sky.set(!isLesson && sid !== 'dash' && sid !== 'me');
   if (sid === 'me') { $('app').innerHTML = viewPortfolio(); return; }
+  if (sid === 'study') { $('app').innerHTML = viewStudy(); return; }
+  if (sid === 'quiz') { $('app').innerHTML = viewQuiz(); return; }
   if (sid === 'dash') { $('app').innerHTML = viewDash(); return; }
   if (isLesson) {
     $('app').innerHTML = viewLesson(s, u, LESSONS[u.lesson]);
