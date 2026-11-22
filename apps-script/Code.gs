@@ -32,9 +32,9 @@ const MAX_NOTE = 2000;          // 글 하나의 최대 글자 수
 const TOKEN_HOURS = 6;          // 로그인 유지 시간 (최대 6시간, 지나면 다시 로그인)
 const MAX_FAILS = 5;            // 비밀번호를 이 횟수만큼 틀리면
 const LOCK_MINUTES = 10;        // 이 시간 동안 로그인을 막아요
-const LOCKED_FIELDS = ['ox', 'oxDetail'];   // 처음 기록한 뒤에는 바뀌지 않는 항목
-const T_UNITS = '단원', T_OX = 'OX', T_NEWS = '뉴스', T_CONFUSE = '헷갈린개념';
-const CONTENT_TABS = [T_UNITS, T_OX, T_NEWS, T_CONFUSE];
+const LOCKED_FIELDS = ['ox', 'oxDetail', 'blank', 'blankDetail'];   // 처음 기록한 뒤에는 바뀌지 않는 항목
+const T_UNITS = '단원', T_OX = 'OX', T_NEWS = '뉴스', T_CONFUSE = '헷갈린개념', T_BLANK = '빈칸', T_ESSAY = '서술형';
+const CONTENT_TABS = [T_UNITS, T_OX, T_NEWS, T_CONFUSE, T_BLANK, T_ESSAY];
 const CONTENT_CACHE = 'content_v1';
 const SHEET_OPEN = '진도공개';
 
@@ -156,7 +156,8 @@ function getContent() {
   const cache = CacheService.getScriptCache();
   const hit = cache.get(CONTENT_CACHE);
   if (hit) return JSON.parse(hit);
-  const ox = readTable(T_OX), news = readTable(T_NEWS), conf = readTable(T_CONFUSE);
+  const ox = readTable(T_OX), news = readTable(T_NEWS), conf = readTable(T_CONFUSE), blank = readTable(T_BLANK), essay = readTable(T_ESSAY);
+  const byNum = (a, b) => Number(a['번호']) - Number(b['번호']);
   const units = readTable(T_UNITS).filter(u => u['단원코드'] && u['공개'] !== 'X').map(u => {
     const code = u['단원코드'];
     return {
@@ -168,6 +169,8 @@ function getContent() {
       news: news.filter(n => n['단원코드'] === code && n['제목']).map(n => ({
         title: n['제목'], source: n['출처'], date: n['날짜'], url: n['링크'], summary: n['요약'], ask: n['질문'], answer: n['설명'] })),
       confuse: conf.filter(c => c['단원코드'] === code && c['보기']).map(c => c['보기']),
+      blanks: blank.filter(b => b['단원코드'] === code && b['문장']).sort(byNum).map(b => ({ q: String(b['문장']).replace(/\{[^}]*\}/g, '{{}}') })),   // 정답은 빼고 보내요
+      essays: essay.filter(e => e['단원코드'] === code && e['질문']).sort(byNum).map(e => ({ n: e['번호'], q: e['질문'], hint: e['제시어'] })),
     };
   });
   const data = { ok: true, units, at: new Date().toISOString() };
@@ -176,6 +179,26 @@ function getContent() {
 }
 
 function findUnitRow(code) { return readTable(T_UNITS).find(u => u['단원코드'] === code); }
+
+/* 빈칸 채우기 채점 — 문장 안의 {정답} 이 정답이에요. {산화/산화 반응} 처럼 / 로 여러 정답을 쓸 수 있어요 */
+const normAns = s => String(s || '').replace(/\([^)]*\)/g, '').replace(/[\s·.,]/g, '').toLowerCase();
+function blankKeys(text) { return (String(text).match(/\{[^}]*\}/g) || []).map(m => m.slice(1, -1).split('/').map(x => x.trim()).filter(Boolean)); }
+function checkBlank(keys, ans) { const a = normAns(ans); return !!a && keys.some(k => normAns(k) === a); }
+function gradeBlank(u, req) {
+  const code = String(req.code || ''), unit = String(req.unit || '').slice(0, 100);
+  if (code && !isOpenFor(code, u, readOpen())) return { ok: false, error: '아직 열리지 않은 단원이에요.' };
+  const rows = readTable(T_BLANK).filter(b => b['단원코드'] === code && b['문장']).sort((a, b) => Number(a['번호']) - Number(b['번호']));
+  const keys = []; rows.forEach(r => blankKeys(r['문장']).forEach(k => keys.push(k)));
+  const answers = Array.isArray(req.answers) ? req.answers : [];
+  if (!keys.length || answers.length !== keys.length) return { ok: false, error: '빈칸 수가 맞지 않아요. 새로고침해 주세요.' };
+  const results = keys.map((k, i) => ({ ok: checkBlank(k, answers[i]), a: k[0] }));
+  const n = results.filter(r => r.ok).length, score = `${n}/${results.length}`;
+  const before = getNotes(u.id, unit);
+  if (before.blank) return { ok: true, results, score, recorded: false, kept: before.blank };
+  writeNote(u.id, u.name, unit, 'blankDetail', results.map(r => r.ok ? '1' : '0').join(''));
+  writeNote(u.id, u.name, unit, 'blank', score);
+  return { ok: true, results, score, recorded: true };
+}
 
 /* OX 채점 — 정답은 서버에만 있어요. 처음 제출한 결과만 기록 */
 function gradeOx(u, req) {
@@ -229,11 +252,13 @@ function doPost(e) {
       case 'login':    return out(login(req));
       case 'content':  return out(contentFor(userOf(req.token)));
       case 'gradeOx':  return out(withUser(req, u => gradeOx(u, req)));
+      case 'gradeBlank': return out(withUser(req, u => gradeBlank(u, req)));
       case 'progress': return out(withUser(req, u => ({ ok: true, done: getDone(u.id) })));
       case 'mark':     return out(withUser(req, u => mark(u, req)));
       case 'notes':    return out(withUser(req, u => {
         const notes = getNotes(u.id, String(req.unit || ''));
         if (notes.summary && req.code) { const r = findUnitRow(String(req.code)); if (r) notes._model = r['모범 정리']; }
+        if (req.code) readTable(T_ESSAY).filter(e => e['단원코드'] === String(req.code) && notes['essay' + e['번호']]).forEach(e => { notes['_m_essay' + e['번호']] = e['모범 답안']; });   // 서술형은 저장한 뒤에 모범 답안 보여 주기
         return { ok: true, notes };
       }));
       case 'myNotes':  return out(withUser(req, u => ({ ok: true, notes: getAllNotes(u.id) })));
@@ -350,6 +375,8 @@ function saveNote(u, req) {
   if (field.startsWith('fb') || LOCKED_FIELDS.includes(field)) return { ok: false, error: '직접 저장할 수 없는 항목이에요.' };
   const res = writeNote(u.id, u.name, unit, field, text);
   if (field === 'summary' && req.code) { const r = findUnitRow(String(req.code)); if (r) res.model = r['모범 정리']; }   // 저장한 뒤에 모범 정리 보여 주기
+  const em = /^essay(\d+)$/.exec(field);
+  if (em && req.code) { const r = readTable(T_ESSAY).find(e => e['단원코드'] === String(req.code) && String(e['번호']) === em[1]); if (r) res.model = r['모범 답안']; }
   return res;
 }
 

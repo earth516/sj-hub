@@ -259,6 +259,15 @@ button.sumrow:hover{border-color:var(--c)}
 .res.no{border-color:color-mix(in srgb,var(--coral) 50%,var(--line))}
 .res .rq{font-weight:600}
 .res .rx{color:var(--body);font-size:.95em;margin-top:2px}
+.bls{display:flex;flex-direction:column;gap:10px;margin:4px 0 16px}
+.bq{display:flex;gap:11px;align-items:flex-start;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);line-height:2.1;font-size:1.02em}
+.bq .ix{flex:none;width:26px;height:26px;margin-top:6px;border-radius:50%;background:var(--sunk);display:grid;place-items:center;font-size:.8em;font-weight:700;color:var(--faint)}
+.bq .bt{min-width:0;word-break:keep-all}
+input.bl{width:7.5em;max-width:60vw;margin:0 3px;padding:3px 9px;border:0;border-bottom:2px solid var(--c,var(--sea));border-radius:6px 6px 0 0;background:color-mix(in srgb,var(--c,var(--sea)) 10%,var(--sunk));color:var(--ink);font:inherit;font-weight:700;text-align:center}
+input.bl:focus{outline:none;background:color-mix(in srgb,var(--c,var(--sea)) 20%,var(--sunk))}
+input.bl.ok{border-bottom-color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,var(--sunk))}
+input.bl.no{border-bottom-color:var(--coral);background:color-mix(in srgb,var(--coral) 14%,var(--sunk));text-decoration:line-through}
+.bq .ans{margin:0 4px;padding:2px 8px;border-radius:8px;background:color-mix(in srgb,var(--ok) 16%,var(--surface));color:var(--ok);font-weight:800;font-size:.92em}
 .scorebox{display:flex;align-items:center;gap:16px;margin-bottom:14px}
 .scorebox .big{font-size:2.8em;font-weight:800;line-height:1;color:var(--c);font-variant-numeric:tabular-nums}
 .scorebox .sub{font-size:.9em;color:var(--body);line-height:1.55}
@@ -978,6 +987,8 @@ const LT = {
   concept: { icon: 'book', label: '개념 정리' },
   explore: { icon: 'flask', label: '탐구' },
   news: { icon: 'news', label: '세상과 연결' },
+  blank: { icon: 'type', label: '빈칸 채우기' },
+  essay: { icon: 'pencil', label: '서술형' },
   check: { icon: 'check-circle', label: 'OX 확인' },
   reflect: { icon: 'refresh', label: '돌아보기' },
 };
@@ -1051,6 +1062,8 @@ function buildLesson(x, s) {
     ...(x.points.length ? [{ list: x.points.map(md) }] : []),
     { write: 'summary', label: '핵심 개념을 내 말로 2~3문장 정리해 보세요.', hint: x.hint, placeholder: '제시어를 넣어 정리해 보세요.', hasModel: x.hasModel },
   ] }];
+  if ((x.blanks || []).length) steps.push({ id: 'blank', type: 'blank', title: '빈칸 채우기', blocks: [{ blank: x.blanks.map(b => ({ q: b.q })) }] });
+  if ((x.essays || []).length) steps.push({ id: 'essay', type: 'essay', title: '서술형', blocks: x.essays.map(e => ({ write: 'essay' + e.n, label: e.q, hint: e.hint, placeholder: '핵심 용어를 넣어 문장으로 써 보세요.', hasModel: true })) });
   if (x.news.length) steps.push({ id: 'news', type: 'news', title: '세상과 연결',
     blocks: x.news.map(n => ({ news: { title: n.title, source: n.source, date: n.date, url: n.url, summary: md(n.summary), ask: md(n.ask), answer: md(n.answer) } })) });
   steps.push({ id: 'check', type: 'check', title: 'OX 확인', blocks: [
@@ -1075,6 +1088,7 @@ function buildPages(L) {
     blocks.forEach(({ b, bid }) => {
       if (b.write) { flush(); out.push({ kind: 'write', si, st, b, bid }); }
       else if (b.news) { flush(); out.push({ kind: 'news', si, st, b, bid }); }
+      else if (b.blank) { flush(); out.push({ kind: 'blank', si, st, b, bid }); }
       else if (b.ox) { flush(); b.ox.forEach((q, i) => out.push({ kind: 'oxq', si, st, b, bid, i })); out.push({ kind: 'oxsum', si, st, b, bid }); }
       else if (b.confuse) { flush(); out.push({ kind: 'confuse', si, st, b, bid }); }
       else if (b.question) { flush(); out.push({ kind: 'question', si, st, b, bid }); }
@@ -1130,6 +1144,7 @@ function renderPage(p) {
     case 'read': return renderRead(p);
     case 'write': return renderWrite(p);
     case 'news': return renderNews(p);
+    case 'blank': return renderBlank(p);
     case 'oxq': return renderOxq(p);
     case 'oxsum': return `<div class="sin">${kicker(p)}<div class="sumbox" id="oxsum-${p.bid}">${oxSumHtml(p.bid)}</div></div>`;
     case 'confuse': return renderConfuse(p);
@@ -1177,7 +1192,7 @@ function renderBlock(b, L, unitKey, bid) {
 /* 쓰기 장 */
 function renderWrite(p) {
   const b = p.b, f = b.write, k = `${curUnit.unitKey}|${f}`, v = notes[k] ?? drafts[k] ?? '', saved = notes[k] != null;
-  const hasModel = b.model || b.hasModel;
+  const hasModel = b.model || b.hasModel, mk = f === 'summary' ? '_model' : '_m_' + f;
   const kws = b.hint ? b.hint.split(',').map(w => w.trim()).filter(Boolean) : [];
   return `<div class="sin wr">${kicker(p)}
     <label class="q" for="w-${esc(f)}">${esc(b.label || '내 말로 정리해 보세요.')}</label>
@@ -1185,7 +1200,7 @@ function renderWrite(p) {
     <textarea id="w-${esc(f)}" data-nk="${esc(k)}" data-step="${esc(p.st.id)}" data-kw="${esc(kws.join(','))}" placeholder="${esc(b.placeholder || '')}" oninput="onWrite(this)">${esc(v)}</textarea>
     <div class="wrow"><span class="cnt" id="wc-${esc(f)}"></span><span class="wst ${saved ? 'ok' : ''}" id="ws-${esc(f)}">${saved ? '저장됨' : ''}</span>
       <button class="btn primary" onclick="saveWrite('${esc(f)}')">${ic('check')} 저장하기</button></div>
-    ${hasModel ? `<div class="model" id="md-${esc(f)}" style="${saved && (b.model || notes[`${curUnit.unitKey}|_model`]) ? 'display:block' : ''}"><div class="lab">${ic('pencil')} 선생님 정리와 비교해 보세요</div><div class="mtext">${b.model || esc(notes[`${curUnit.unitKey}|_model`] || '')}</div>
+    ${hasModel ? `<div class="model" id="md-${esc(f)}" style="${saved && (b.model || notes[`${curUnit.unitKey}|${mk}`]) ? 'display:block' : ''}"><div class="lab">${ic('pencil')} ${f === 'summary' ? '선생님 정리와 비교해 보세요' : '모범 답안과 비교해 보세요'}</div><div class="mtext">${b.model || esc(notes[`${curUnit.unitKey}|${mk}`] || '')}</div>
       <p class="tip">빠진 내용이 있다면 내 정리를 고쳐서 다시 저장해도 돼요. 고친 시각도 기록에 남아요.</p></div>` : ''}
   </div>`;
 }
@@ -1334,6 +1349,66 @@ window.retryWrong = bid => {
   toast('틀린 문제만 다시 골라 보세요. 기록된 점수는 바뀌지 않아요.');
 };
 
+/* 빈칸 채우기 — 문장 안의 {{}} 자리에 입력칸이 생겨요. 채점은 서버에서 해요 */
+function blankState(bid) {
+  const B = curUnit.st.blanks = curUnit.st.blanks || {};
+  if (!B[bid]) B[bid] = { vals: [], graded: false, res: null };
+  return B[bid];
+}
+function renderBlank(p) { return `<div class="sin"><div id="bk-${p.bid}">${blankHtml(p.bid)}</div></div>`; }
+function refreshBlank(bid) { const el = $('bk-' + bid); if (el) el.innerHTML = blankHtml(bid); }
+function blankHtml(bid) {
+  const b = blockOf(bid), S = blankState(bid), k = `${curUnit.unitKey}|blank`;
+  let n = 0;
+  const total = b.blank.reduce((a, s) => a + s.q.split('{{}}').length - 1, 0);
+  const rows = b.blank.map((s, i) => {
+    const parts = s.q.split('{{}}'); let h = '';
+    parts.forEach((t, j) => {
+      h += esc(t);
+      if (j < parts.length - 1) {
+        const m = n++, r = S.graded && S.res ? S.res[m] : null;
+        h += `<input class="bl ${r ? (r.ok ? 'ok' : 'no') : ''}" data-n="${m}" value="${esc(S.vals[m] || '')}" ${S.graded ? 'readonly' : ''} oninput="onBlank('${bid}',${m},this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();nextBlank(this)}" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="${i + 1}번 빈칸 ${m + 1}">`;
+        if (r && !r.ok) h += `<span class="ans">${esc(r.a)}</span>`;
+      }
+    });
+    return `<div class="bq"><span class="ix">${i + 1}</span><div class="bt">${h}</div></div>`;
+  }).join('');
+  const filled = S.vals.filter(v => v && v.trim()).length;
+  const head = !S.graded ? `<h2 class="stitle">문장을 읽고 빈칸을 채워 보세요</h2>`
+    : `<div class="scorebox"><div class="big">${esc(S.score)}</div><div class="sub">${S.recorded ? `${ic('folder')} 포트폴리오에 기록했어요<br>(첫 번째 풀이)` : `이번 점수 ${esc(S.score)}<br>포트폴리오에는 첫 번째 풀이 <b>${esc(S.kept || notes[k] || '')}</b>가 남아 있어요`}</div></div>`;
+  const foot = !S.graded
+    ? `<div class="dn-acts"><button class="btn primary" id="bl-submit-${bid}" ${filled < total ? 'disabled' : ''} onclick="submitBlank('${bid}')">${ic('check')} 제출하고 채점하기</button></div>
+       ${notes[k] ? `<p class="muted" style="font-size:.85em">포트폴리오에 기록된 점수 <b>${esc(notes[k])}</b> · 다시 풀어도 기록은 바뀌지 않아요.</p>` : ''}`
+    : (S.res.some(r => !r.ok) ? `<div class="dn-acts"><button class="btn" onclick="retryBlank('${bid}')">${ic('refresh')} 틀린 빈칸만 다시 풀기</button></div>` : '');
+  return `${head}<div class="bls">${rows}</div>${foot}`;
+}
+window.onBlank = (bid, m, v) => {
+  const S = blankState(bid); S.vals[m] = v;
+  const b = blockOf(bid), total = b.blank.reduce((a, s) => a + s.q.split('{{}}').length - 1, 0);
+  const btn = $('bl-submit-' + bid); if (btn) btn.disabled = S.vals.filter(x => x && x.trim()).length < total;
+};
+window.nextBlank = el => { const all = [...el.closest('.bls').querySelectorAll('input.bl')], i = all.indexOf(el); if (all[i + 1]) all[i + 1].focus(); else { const btn = el.closest('.sin').querySelector('.btn.primary'); if (btn && !btn.disabled) btn.focus(); } };
+window.submitBlank = async bid => {
+  const S = blankState(bid); if (S.graded) return;
+  if (!session) { toast('로그인하면 채점하고 점수를 기록할 수 있어요.'); openModal('login-modal'); return; }
+  const btn = $('bl-submit-' + bid); if (btn) { btn.disabled = true; btn.textContent = '채점 중…'; }
+  try {
+    const total = blockOf(bid).blank.reduce((a, s) => a + s.q.split('{{}}').length - 1, 0);
+    const r = await api('gradeBlank', { unit: curUnit.unitKey, code: curUnit.u.code, answers: Array.from({ length: total }, (_, i) => (S.vals[i] || '').trim()) });
+    if (!r.ok) throw new Error(r.error);
+    S.graded = true; S.res = r.results; S.score = r.score; S.recorded = !!r.recorded; S.kept = r.kept;
+    const k = `${curUnit.unitKey}|blank`;
+    if (r.recorded) { notes[k] = r.score; autoDone(pages.find(p => p.kind === 'blank' && p.bid === bid).st.id); } else if (r.kept && !notes[k]) notes[k] = r.kept;
+    refreshBlank(bid); renderDonePage();
+  } catch (e) { if (e.message !== 'EXPIRED') toast(e.message || '채점하지 못했어요.'); refreshBlank(bid); }
+};
+window.retryBlank = bid => {
+  const S = blankState(bid);
+  S.res.forEach((r, i) => { if (!r.ok) S.vals[i] = ''; });
+  S.graded = false; S.res = null; refreshBlank(bid);
+  toast('틀린 빈칸만 다시 써 보세요. 기록된 점수는 바뀌지 않아요.');
+};
+
 /* 헷갈린 개념 · 질문 */
 function renderConfuse(p) {
   const cur = notes[`${curUnit.unitKey}|confuse`];
@@ -1375,6 +1450,8 @@ function doneHtml() {
   pages.forEach((p, i) => {
     if (p.kind === 'write' && p.b.write === 'summary') rows.push({ k: '개념 정리', ok: !!N('summary'), v: N('summary') ? '저장함' : '아직이에요', i });
     else if (p.kind === 'news') { const ok = done.has(`${unitKey}|${p.st.id}`); if (!rows.some(r => r.k === '세상과 연결')) rows.push({ k: '세상과 연결', ok, v: ok ? '확인함' : '아직이에요', i }); }
+    else if (p.kind === 'blank') rows.push({ k: '빈칸 채우기', ok: !!N('blank'), v: N('blank') ? `${N('blank')} (첫 풀이)` : '아직이에요', i });
+    else if (p.kind === 'write' && /^essay/.test(p.b.write)) rows.push({ k: `서술형 ${p.b.write.slice(5)}`, ok: !!N(p.b.write), v: N(p.b.write) ? '저장함' : '아직이에요', i });
     else if (p.kind === 'oxsum') rows.push({ k: 'OX 확인', ok: !!N('ox'), v: N('ox') ? `${N('ox')} (첫 풀이)` : '아직이에요', i });
     else if (p.kind === 'confuse') rows.push({ k: '가장 헷갈린 개념', ok: !!N('confuse'), v: N('confuse') || '고르지 않았어요', i, opt: true });
     else if (p.kind === 'question' && N('question')) rows.push({ k: '선생님께 남긴 질문', ok: true, v: '전달함', i });
@@ -1496,8 +1573,9 @@ async function loadNotes(s, u) {
       const sw = $('sw-' + field); if (sw && text) sw.textContent = text;
     });
     if (r.notes.summary) showModel('summary', r.notes._model);
+    Object.entries(r.notes || {}).forEach(([f, t]) => { if (f.startsWith('_m_')) showModel(f.slice(3), t); });
     if (r.notes.confuse) document.querySelectorAll('#cf button').forEach(b => b.classList.toggle('on', b.dataset.v === r.notes.confuse));
-    pages.forEach(p => { if (p.kind === 'oxsum') renderOxSum(p.bid); });
+    pages.forEach(p => { if (p.kind === 'oxsum') renderOxSum(p.bid); if (p.kind === 'blank') refreshBlank(p.bid); });
     renderDonePage();
   } catch { }
 }
