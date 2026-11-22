@@ -13,7 +13,7 @@
   --line:#1f2f3e; --line-soft:#18242f;
   --sea:#62cfc2; --sea-soft:rgba(98,207,194,.12);
   --coral:#ef7a69; --ok:#4fd98a; --warn:#f0b955;
-  --head:#0c141c; --glass:rgba(10,17,24,.94); --strong:#fff; --on-sea:#06201d;
+  --sky-rgb:255,255,255; --head:#0c141c; --glass:rgba(10,17,24,.94); --strong:#fff; --on-sea:#06201d;
 }
 :root[data-theme="light"]{
   color-scheme:light;
@@ -22,7 +22,7 @@
   --line:#d4dfe8; --line-soft:#e4ebf1;
   --sea:#0a7d73; --sea-soft:rgba(10,125,115,.09);
   --coral:#c24334; --ok:#15803d; --warn:#a16207;
-  --head:#ffffff; --glass:rgba(238,242,246,.94); --strong:#000; --on-sea:#ffffff;
+  --sky-rgb:10,95,110; --head:#ffffff; --glass:rgba(238,242,246,.94); --strong:#000; --on-sea:#ffffff;
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--paper);color:var(--ink)}
@@ -449,9 +449,53 @@ a.pf-card:hover{border-color:var(--c)}
   .pts li{padding:8px 12px;line-height:1.55}
 }
 
+
+/* ===== 밤하늘 · 메인 ===== */
+#sky{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;display:none}
+body.sky-on #sky{display:block}
+body.sky-on{background:linear-gradient(180deg,#050b14 0%,#0a1822 55%,#0c2230 100%) fixed}
+:root[data-theme="light"] body.sky-on{background:linear-gradient(180deg,#dfeaf3 0%,#eef4f8 60%,#e3f0ef 100%) fixed}
+html:has(body.sky-on){background:#050b14}
+:root[data-theme="light"] html:has(body.sky-on){background:#dfeaf3}
+header,main,footer{position:relative;z-index:1}
+header{z-index:20}
+body.sky-on header{background:color-mix(in srgb,var(--head) 70%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+body.sky-on .subj,body.sky-on .lk,body.sky-on .todo,body.sky-on .urows{background:color-mix(in srgb,var(--surface) 62%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+
+.hero{position:relative;text-align:center;padding:64px 18px 150px;margin:-26px calc(50% - 50vw) 6px;overflow:hidden;isolation:isolate}
+.hero h1{margin:0;font-size:clamp(38px,7vw,64px);font-weight:800;letter-spacing:-.035em;line-height:1.05;color:var(--strong);text-shadow:0 0 38px color-mix(in srgb,var(--sea) 45%,transparent)}
+.hero .lead{max-width:30em;margin:16px auto 0;font-size:15.5px;line-height:1.65}
+/* 지구의 가장자리: 화면 아래에서 둥글게 떠오르는 대기 */
+.hero::before{content:"";position:absolute;z-index:-1;left:50%;top:calc(100% - 84px);width:max(190%,1500px);aspect-ratio:1;transform:translateX(-50%);border-radius:50%;
+  background:radial-gradient(circle at 50% 0%,rgba(98,207,194,.30) 0,rgba(22,78,104,.85) 5%,#0b2233 16%,var(--paper) 42%);
+  box-shadow:0 -1px 0 rgba(170,245,235,.75),0 -12px 40px rgba(98,207,194,.45),0 -40px 120px rgba(98,207,194,.18)}
+:root[data-theme="light"] .hero::before{background:radial-gradient(circle at 50% 0%,rgba(10,125,115,.28) 0,rgba(120,185,200,.55) 6%,#cfe3ec 18%,var(--paper) 44%);box-shadow:0 -1px 0 rgba(10,125,115,.55),0 -14px 44px rgba(10,125,115,.22)}
+.hero::after{content:"";position:absolute;z-index:-1;left:50%;bottom:20px;width:min(560px,90%);height:90px;transform:translateX(-50%);background:radial-gradient(ellipse at 50% 100%,rgba(98,207,194,.35),transparent 70%);filter:blur(6px);animation:breathe 6s ease-in-out infinite}
+@keyframes breathe{0%,100%{opacity:.55}50%{opacity:1}}
+.hero h1,.hero .lead{animation:rise .9s cubic-bezier(.2,.7,.2,1) both}
+.hero .lead{animation-delay:.12s}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+.subjs{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.subj{position:relative;overflow:hidden;transition:transform .18s,border-color .18s,box-shadow .18s,background .18s}
+.subj::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--c)}
+.subj:hover{transform:translateY(-3px);box-shadow:0 10px 30px color-mix(in srgb,var(--c) 28%,transparent)}
+.lk{transition:transform .18s,border-color .18s,box-shadow .18s}
+.lk:hover{transform:translateY(-2px);box-shadow:0 8px 22px color-mix(in srgb,var(--sea) 20%,transparent)}
+@media (max-width:640px){
+  .hero{padding:44px 18px 120px}
+  .hero::before{top:calc(100% - 64px)}
+}
+
+body.sky-on{overflow-x:clip}
+
+.hero{-webkit-mask-image:linear-gradient(to bottom,#000 70%,transparent 100%);mask-image:linear-gradient(to bottom,#000 70%,transparent 100%);padding-bottom:170px}
+@media (max-width:640px){.hero{padding-bottom:135px}}
+
 </style>
 </head>
 <body>
+<canvas id="sky" aria-hidden="true"></canvas>
 
 <header>
   <div class="bar">
@@ -805,8 +849,10 @@ const lk = (url, icon, title, desc) => `<a class="lk" href="${esc(url)}" target=
 function viewHome() {
   return `
     ${DEMO ? `<div class="banner"><b>체험 모드</b> · 아직 구글 시트와 연결되지 않았어요. 학생은 <b>10101</b> / <b>1234</b>, 선생님은 <b>teacher</b> / <b>1234</b>로 로그인해 볼 수 있고, 기록은 이 브라우저에만 저장돼요.</div>` : ''}
-    <h1>${esc(SITE.title)}</h1>
-    <p class="lead">${esc(SITE.subtitle)}</p>
+    <section class="hero">
+      <h1>${esc(SITE.title)}</h1>
+      <p class="lead">${esc(SITE.subtitle)}</p>
+    </section>
     ${viewTodo()}
     <h2>과목</h2>
     <div class="subjs">
@@ -1490,6 +1536,98 @@ async function loadPortfolio() {
   box.innerHTML = html || '<p>아직 점검할 단원이 없어요.</p>';
 }
 
+
+/* ---------- 밤하늘 배경: 반짝이는 별 + 떨어지는 별똥별 ---------- */
+const sky = (() => {
+  const cv = document.getElementById('sky');
+  if (!cv || !cv.getContext) return { set() {} };
+  const g = cv.getContext('2d');
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let W = 0, H = 0, dpr = 1, stars = [], meteors = [], raf = 0, last = 0, nextMeteor = 0, on = false;
+
+  const rgb = () => (getComputedStyle(document.documentElement).getPropertyValue('--sky-rgb').trim() || '255,255,255');
+  const alphaK = () => (document.documentElement.dataset.theme === 'light' ? 0.55 : 1);
+  const rnd = (a, b) => a + Math.random() * (b - a);
+
+  function size() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = innerWidth; H = innerHeight;
+    cv.width = W * dpr; cv.height = H * dpr;
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const n = Math.min(190, Math.round(W * H / 7500));
+    stars = Array.from({ length: n }, () => ({
+      x: Math.random() * W, y: Math.random() * H,
+      r: Math.random() < .15 ? rnd(1.4, 2.1) : rnd(.55, 1.25),
+      ph: Math.random() * 6.28, sp: rnd(.6, 2.2), base: rnd(.35, .9),
+      drift: rnd(2, 7),                       // 아주 천천히 아래로 흘러요 (px/초)
+    }));
+  }
+
+  function spawn() {
+    const len = rnd(110, 230), speed = rnd(520, 900);
+    const ang = rnd(1.95, 2.25);               // 오른쪽 위에서 왼쪽 아래로 (라디안)
+    meteors.push({
+      x: rnd(W * .25, W * 1.05), y: rnd(-40, H * .35),
+      vx: Math.cos(ang) * speed, vy: Math.sin(ang) * speed,
+      len, life: 0, max: rnd(.9, 1.5), w: rnd(1.2, 2.2),
+    });
+  }
+
+  function frame(t) {
+    raf = requestAnimationFrame(frame);
+    const dt = Math.min((t - last) / 1000 || 0, .05); last = t;
+    const c = rgb(), k = alphaK();
+    g.clearRect(0, 0, W, H);
+
+    for (const s of stars) {
+      s.y += s.drift * dt; if (s.y > H + 2) { s.y = -2; s.x = Math.random() * W; }
+      const a = (s.base + Math.sin(t / 1000 * s.sp + s.ph) * .3) * k;
+      g.fillStyle = `rgba(${c},${Math.max(.05, a).toFixed(3)})`;
+      g.beginPath(); g.arc(s.x, s.y, s.r, 0, 6.2832); g.fill();
+    }
+
+    nextMeteor -= dt;
+    if (nextMeteor <= 0 && meteors.length < 4) { spawn(); nextMeteor = rnd(.7, 2.2); }
+    for (let i = meteors.length - 1; i >= 0; i--) {
+      const m = meteors[i];
+      m.x += m.vx * dt; m.y += m.vy * dt; m.life += dt;
+      if (m.life > m.max || m.y > H + 60 || m.x < -60) { meteors.splice(i, 1); continue; }
+      const fade = Math.min(1, m.life / .12) * Math.min(1, (m.max - m.life) / .35);
+      const sp = Math.hypot(m.vx, m.vy), tx = m.x - m.vx / sp * m.len, ty = m.y - m.vy / sp * m.len;
+      const gr = g.createLinearGradient(m.x, m.y, tx, ty);
+      gr.addColorStop(0, `rgba(${c},${(.95 * fade * k).toFixed(3)})`);
+      gr.addColorStop(.35, `rgba(150,230,225,${(.35 * fade * k).toFixed(3)})`);
+      gr.addColorStop(1, 'rgba(150,230,225,0)');
+      g.strokeStyle = gr; g.lineWidth = m.w; g.lineCap = 'round';
+      g.beginPath(); g.moveTo(m.x, m.y); g.lineTo(tx, ty); g.stroke();
+      g.fillStyle = `rgba(${c},${(fade * k).toFixed(3)})`;
+      g.shadowColor = 'rgba(120,230,220,.9)'; g.shadowBlur = 10;
+      g.beginPath(); g.arc(m.x, m.y, m.w * .9, 0, 6.2832); g.fill();
+      g.shadowBlur = 0;
+    }
+  }
+
+  function drawStill() {
+    const c = rgb(), k = alphaK(); g.clearRect(0, 0, W, H);
+    for (const s of stars) { g.fillStyle = `rgba(${c},${(s.base * k).toFixed(3)})`; g.beginPath(); g.arc(s.x, s.y, s.r, 0, 6.2832); g.fill(); }
+  }
+
+  function start() { if (raf || still) return; last = performance.now(); raf = requestAnimationFrame(frame); }
+  function stop() { cancelAnimationFrame(raf); raf = 0; }
+
+  addEventListener('resize', () => { if (on) { size(); if (still) drawStill(); } });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); else if (on) start(); });
+
+  return {
+    set(v) {
+      on = v; document.body.classList.toggle('sky-on', v);
+      if (v) { size(); meteors = []; nextMeteor = .4; still ? drawStill() : start(); }
+      else { stop(); g.clearRect(0, 0, W, H); }
+    },
+    refresh() { if (on && still) drawStill(); },
+  };
+})();
+
 /* ============================================================
    선생님 대시보드 (역할이 '교사'인 계정만)
    - 개념 정리 모아 읽기·채점 · 문항별 정답률 · 학생별 포트폴리오 · 학생 질문 · 한눈에 보기 · 엑셀 내보내기
@@ -1728,6 +1866,7 @@ function route() {
   curUnit = null;
   const isLesson = !!(u && u.lesson);
   document.body.classList.toggle('lesson-mode', isLesson);
+  sky.set(!isLesson && sid !== 'dash' && sid !== 'me');
   if (sid === 'me') { $('app').innerHTML = viewPortfolio(); return; }
   if (sid === 'dash') { $('app').innerHTML = viewDash(); return; }
   if (isLesson) {
