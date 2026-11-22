@@ -32,7 +32,7 @@ const MAX_NOTE = 2000;          // 글 하나의 최대 글자 수
 const TOKEN_HOURS = 6;          // 로그인 유지 시간 (최대 6시간, 지나면 다시 로그인)
 const MAX_FAILS = 5;            // 비밀번호를 이 횟수만큼 틀리면
 const LOCK_MINUTES = 10;        // 이 시간 동안 로그인을 막아요
-const LOCKED_FIELDS = ['ox', 'oxDetail', 'blank', 'blankDetail'];   // 처음 기록한 뒤에는 바뀌지 않는 항목
+const LOCKED_FIELDS = ['ox', 'oxDetail', 'blankFirst'];   // 처음 기록한 뒤에는 바뀌지 않는 항목
 const T_UNITS = '단원', T_OX = 'OX', T_NEWS = '뉴스', T_CONFUSE = '헷갈린개념', T_BLANK = '빈칸', T_ESSAY = '서술형';
 const CONTENT_TABS = [T_UNITS, T_OX, T_NEWS, T_CONFUSE, T_BLANK, T_ESSAY];
 const CONTENT_CACHE = 'content_v1';
@@ -171,7 +171,7 @@ function getContent() {
         title: n['제목'], source: n['출처'], date: n['날짜'], url: n['링크'], summary: n['요약'], ask: n['질문'], answer: n['설명'] })),
       confuse: conf.filter(c => c['단원코드'] === code && c['보기']).map(c => c['보기']),
       blanks: blank.filter(b => b['단원코드'] === code && b['문장']).sort(byNum).map(b => ({ q: String(b['문장']).replace(/\{[^}]*\}/g, '{{}}') })),   // 정답은 빼고 보내요
-      essays: essay.filter(e => e['단원코드'] === code && e['질문']).sort(byNum).map(e => ({ n: e['번호'], q: e['질문'], hint: e['제시어'] })),
+      essays: essay.filter(e => e['단원코드'] === code && e['질문']).sort(byNum).map(e => ({ n: e['번호'], q: e['질문'], hint: e['제시어'], outline: e['힌트'] })),
     };
   });
   const data = { ok: true, units, at: new Date().toISOString() };
@@ -194,11 +194,11 @@ function gradeBlank(u, req) {
   if (!keys.length || answers.length !== keys.length) return { ok: false, error: '빈칸 수가 맞지 않아요. 새로고침해 주세요.' };
   const results = keys.map((k, i) => ({ ok: checkBlank(k, answers[i]), a: k[0] }));
   const n = results.filter(r => r.ok).length, score = `${n}/${results.length}`;
-  const before = getNotes(u.id, unit);
-  if (before.blank) return { ok: true, results, score, recorded: false, kept: before.blank };
+  // 점수는 풀 때마다 새로 기록하고, 첫 번째 점수는 따로 남겨 둬요
   writeNote(u.id, u.name, unit, 'blankDetail', results.map(r => r.ok ? '1' : '0').join(''));
   writeNote(u.id, u.name, unit, 'blank', score);
-  return { ok: true, results, score, recorded: true };
+  const w = writeNote(u.id, u.name, unit, 'blankFirst', score);
+  return { ok: true, results, score, recorded: true, first: w.kept || score };
 }
 
 /* OX 채점 — 정답은 서버에만 있어요. 처음 제출한 결과만 기록 */
@@ -373,7 +373,7 @@ function saveNote(u, req) {
   if (/^[=+\-@]/.test(text)) text = "'" + text;   // 수식으로 바뀌지 않게
   if (!unit || !field) return { ok: false, error: '저장할 위치가 없어요.' };
   if (req.code && !isOpenFor(String(req.code), u, readOpen())) return { ok: false, error: '아직 열리지 않은 단원이에요.' };
-  if (field.startsWith('fb') || LOCKED_FIELDS.includes(field)) return { ok: false, error: '직접 저장할 수 없는 항목이에요.' };
+  if (field.startsWith('fb') || field.startsWith('blank') || LOCKED_FIELDS.includes(field)) return { ok: false, error: '직접 저장할 수 없는 항목이에요.' };
   const res = writeNote(u.id, u.name, unit, field, text);
   if (field === 'summary' && req.code) { const r = findUnitRow(String(req.code)); if (r) res.model = r['모범 정리']; }   // 저장한 뒤에 모범 정리 보여 주기
   const em = /^essay(\d+)$/.exec(field);
