@@ -126,6 +126,13 @@ h2{font-size:16px;margin:28px 0 10px;font-weight:700}
 .toast.show{opacity:1}
 footer{border-top:1px solid var(--line);color:var(--faint);font-size:12.5px;text-align:center;padding:20px 16px}
 footer a{color:var(--body)}
+.footer-top{max-width:1100px;margin:0 auto;display:flex;flex-wrap:wrap;gap:14px 24px;align-items:center;justify-content:space-between;text-align:left}
+.footer-copy{margin:0;line-height:1.7}
+.footer-links{display:flex;gap:8px;flex-wrap:wrap}
+.yt-badge{display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border:1px solid var(--line);border-radius:999px;color:var(--body);text-decoration:none;font-size:12.5px;background:var(--surface)}
+.yt-badge:hover{border-color:var(--sea);color:var(--ink)}
+.yt-badge .play{width:0;height:0;border-left:8px solid var(--coral);border-top:5px solid transparent;border-bottom:5px solid transparent}
+@media(max-width:560px){.footer-top{flex-direction:column;text-align:center}}
 
 /* 할 일 · 현황 */
 .todo{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:22px}
@@ -522,7 +529,13 @@ body.sky-on{overflow-x:clip}
 <main id="app"></main>
 
 <footer>
-  <span id="foot"></span>
+  <div class="footer-top">
+    <p class="footer-copy">© 교사 이상준. All rights reserved.<br>오류제보/문의: <a href="mailto:cepheid@kakao.com">cepheid@kakao.com</a></p>
+    <div class="footer-links">
+      <a class="yt-badge" href="https://www.youtube.com/@science_earth" target="_blank" rel="noopener"><span class="play"></span> 유튜브</a>
+      <a class="yt-badge" href="https://linktr.ee/earth_sj" target="_blank" rel="noopener"><span class="badge-icon">🌍</span> Linktree</a>
+    </div>
+  </div>
 </footer>
 
 <!-- 로그인 창 -->
@@ -579,7 +592,6 @@ const LS_DEMO = 'sjhub.demo';
 
 document.title = SITE.title;
 document.querySelectorAll('.site-title').forEach(el => el.textContent = SITE.title);
-$('foot').innerHTML = `© ${esc(SITE.teacher)} · 오류 제보 <a href="mailto:${esc(SITE.email)}">${esc(SITE.email)}</a> · <a href="${esc(SITE.youtube)}" target="_blank" rel="noopener">YouTube</a>`;
 
 /* ---------- 데이터 찾기 ---------- */
 const subjectById = id => SUBJECTS.find(s => s.id === id);
