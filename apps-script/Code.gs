@@ -170,8 +170,8 @@ function getContent() {
       news: news.filter(n => n['단원코드'] === code && n['제목']).map(n => ({
         title: n['제목'], source: n['출처'], date: n['날짜'], url: n['링크'], summary: n['요약'], ask: n['질문'], answer: n['설명'] })),
       confuse: conf.filter(c => c['단원코드'] === code && c['보기']).map(c => c['보기']),
-      blanks: blank.filter(b => b['단원코드'] === code && b['문장']).sort(byNum).map(b => ({ q: String(b['문장']).replace(/\{[^}]*\}/g, '{{}}') })),   // 정답은 빼고 보내요
-      essays: essay.filter(e => e['단원코드'] === code && e['질문']).sort(byNum).map(e => ({ n: e['번호'], q: e['질문'], hint: e['제시어'], outline: e['힌트'] })),
+      blanks: blank.filter(b => b['단원코드'] === code && b['문장']).sort(byNum).map(b => ({ q: String(b['문장']).replace(/\{[^}]*\}/g, '{{}}'), sec: b['소제목'] || '' })),   // 정답은 빼고 보내요
+      essays: essay.filter(e => e['단원코드'] === code && e['질문']).sort(byNum).map(e => ({ n: e['번호'], q: e['질문'], hint: e['제시어'], outline: e['힌트'], sec: e['소제목'] || '' })),
     };
   });
   const data = { ok: true, units, at: new Date().toISOString() };

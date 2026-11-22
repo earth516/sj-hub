@@ -66,10 +66,20 @@ h2{font-size:16px;margin:28px 0 10px;font-weight:700}
 .gate{max-width:480px;margin:9vh auto 0;text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px}
 .gate-ic{width:64px;height:64px;border-radius:18px;display:grid;place-items:center;background:color-mix(in srgb,var(--sea) 15%,transparent);color:var(--sea)}
 .gate-ic svg{width:34px;height:34px}
+.bsec{margin:14px 0 2px;font-size:1em;color:var(--sea);display:flex;align-items:center;gap:8px}
+.bsec::before{content:'';width:4px;height:1.1em;border-radius:2px;background:var(--sea)}
+.esec{display:inline-block;margin-bottom:6px;padding:3px 10px;border-radius:999px;font-size:.82em;font-weight:600;background:color-mix(in srgb,var(--sea) 14%,transparent);color:var(--sea)}
 .hbtn{align-self:flex-start;margin:2px 0 8px}
 .hbox{margin-bottom:10px}
 .hbox[hidden]{display:none}
 .outline{margin:0 0 8px;padding:10px 13px;border-left:3px solid var(--sea);background:color-mix(in srgb,var(--sea) 9%,var(--surface));border-radius:0 10px 10px 0;line-height:1.7;font-size:.95em}
+.spills{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 14px}
+.spills button{padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--body);font:inherit;font-size:13.5px;font-weight:600;cursor:pointer}
+.spills button.on{background:color-mix(in srgb,var(--c,var(--sea)) 18%,var(--surface));border-color:var(--c,var(--sea));color:var(--ink)}
+.eq{margin-bottom:10px}
+.eq .body{display:block;white-space:pre-wrap}
+.pf-es{margin-top:8px;white-space:pre-wrap}
+.pf-bl{font-weight:600}
 .hub3{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin:6px 0 20px}
 .hub{display:flex;flex-direction:column;gap:6px;padding:20px 18px;background:var(--surface);border:1px solid var(--line);border-radius:16px;text-decoration:none;color:inherit;transition:transform .18s,border-color .18s,box-shadow .18s}
 .hub:hover{transform:translateY(-2px);border-color:var(--c,var(--sea));box-shadow:0 6px 18px color-mix(in srgb,var(--c,var(--sea)) 18%,transparent)}
@@ -1109,8 +1119,8 @@ function buildLesson(x, s) {
     // 빈칸 채우기·서술형이 있는 단원은 '내 말로 정리' 쓰기를 빼요 (그 단계들이 대신해요)
     ...((x.blanks || []).length || (x.essays || []).length ? [] : [{ write: 'summary', label: '핵심 개념을 내 말로 2~3문장 정리해 보세요.', hint: x.hint, placeholder: '제시어를 넣어 정리해 보세요.', hasModel: x.hasModel }]),
   ] }];
-  if ((x.blanks || []).length) steps.push({ id: 'blank', type: 'blank', title: '빈칸 채우기', blocks: [{ blank: x.blanks.map(b => ({ q: b.q })) }] });
-  if ((x.essays || []).length) steps.push({ id: 'essay', type: 'essay', title: '서술형', blocks: x.essays.map(e => ({ write: 'essay' + e.n, label: e.q, hint: e.hint, outline: e.outline, placeholder: '핵심 용어를 넣어 문장으로 써 보세요.', hasModel: true })) });
+  if ((x.blanks || []).length) steps.push({ id: 'blank', type: 'blank', title: '빈칸 채우기', blocks: [{ blank: x.blanks.map(b => ({ q: b.q, sec: b.sec })) }] });
+  if ((x.essays || []).length) steps.push({ id: 'essay', type: 'essay', title: '서술형', blocks: x.essays.map(e => ({ write: 'essay' + e.n, label: e.q, hint: e.hint, outline: e.outline, sec: e.sec, placeholder: '핵심 용어를 넣어 문장으로 써 보세요.', hasModel: true })) });
   if (x.news.length) steps.push({ id: 'news', type: 'news', title: '세상과 연결',
     blocks: x.news.map(n => ({ news: { title: n.title, source: n.source, date: n.date, url: n.url, summary: md(n.summary), ask: md(n.ask), answer: md(n.answer) } })) });
   steps.push({ id: 'check', type: 'check', title: 'OX 확인', blocks: [
@@ -1242,6 +1252,7 @@ function renderWrite(p) {
   const hasModel = b.model || b.hasModel, mk = f === 'summary' ? '_model' : '_m_' + f;
   const kws = b.hint ? b.hint.split(',').map(w => w.trim()).filter(Boolean) : [];
   return `<div class="sin wr">${kicker(p)}
+    ${b.sec ? `<div class="esec">${esc(b.sec)}</div>` : ''}
     <label class="q" for="w-${esc(f)}">${esc(b.label || '내 말로 정리해 보세요.')}</label>
     ${b.outline ? `<button type="button" class="btn hbtn" id="hbtn-${esc(f)}" onclick="toggleHint('${esc(f)}')">${ic('target')} 힌트 보기</button>` : ''}
     <div class="hbox" id="hb-${esc(f)}" ${b.outline ? 'hidden' : ''}>
@@ -1336,8 +1347,7 @@ const oxSumIdx = bid => pages.findIndex(p => p.kind === 'oxsum' && p.bid === bid
 function renderOxq(p) {
   const q = p.b.ox[p.i], N = p.b.ox.length;
   return `<div class="sin">${kicker(p)}<div class="oxq"><div class="n">문제 ${p.i + 1} / ${N}</div><p class="qt">${q.q}</p>
-    <div class="oxbtns"><button class="oxbtn o" data-v="O" onclick="pickOx('${p.bid}',${p.i},'O')" aria-label="O (맞다)">O</button><button class="oxbtn x" data-v="X" onclick="pickOx('${p.bid}',${p.i},'X')" aria-label="X (틀리다)">X</button></div>
-    <div class="hintkey">키보드 O · X 로도 고를 수 있어요</div></div></div>`;
+    <div class="oxbtns"><button class="oxbtn o" data-v="O" onclick="pickOx('${p.bid}',${p.i},'O')" aria-label="O (맞다)">O</button><button class="oxbtn x" data-v="X" onclick="pickOx('${p.bid}',${p.i},'X')" aria-label="X (틀리다)">X</button></div></div></div>`;
 }
 let oxTimer;
 window.pickOx = (bid, i, v) => {
@@ -1416,7 +1426,9 @@ function blankHtml(bid) {
   const b = blockOf(bid), S = blankState(bid), k = `${curUnit.unitKey}|blank`;
   let n = 0;
   const total = b.blank.reduce((a, s) => a + s.q.split('{{}}').length - 1, 0);
+  let lastSec = null;
   const rows = b.blank.map((s, i) => {
+    const secH = s.sec && s.sec !== lastSec ? (lastSec = s.sec, `<h3 class="bsec">${esc(s.sec)}</h3>`) : '';
     const parts = s.q.split('{{}}'); let h = '';
     parts.forEach((t, j) => {
       h += esc(t);
@@ -1426,7 +1438,7 @@ function blankHtml(bid) {
         if (r && !r.ok) h += `<span class="ans">${esc(r.a)}</span>`;
       }
     });
-    return `<div class="bq"><span class="ix">${i + 1}</span><div class="bt">${h}</div></div>`;
+    return `${secH}<div class="bq"><span class="ix">${i + 1}</span><div class="bt">${h}</div></div>`;
   }).join('');
   const filled = S.vals.filter(v => v && v.trim()).length;
   const head = !S.graded ? `<h2 class="stitle">문장을 읽고 빈칸을 채워 보세요</h2>`
@@ -1669,11 +1681,21 @@ function viewPortfolio() {
     <div id="pf">불러오는 중…</div>
     <p style="margin-top:26px"><button class="btn ghost" onclick="openPw()">${ic('key')} 비밀번호 바꾸기</button></p>`;
 }
+/* 포트폴리오·대시보드 공용: 빈칸 점수와 서술형 답 */
+function pfNewHtml(L, get) {
+  const bl = get('blank'), bf = get('blankFirst'), es = essaysOf(L);
+  return `<div class="pf-sum">${bl ? `<div class="pf-bl">${ic('type')} 빈칸 채우기 <b>${esc(bl)}</b>${bf && bf !== bl ? ` <span class="muted">(첫 풀이 ${esc(bf)})</span>` : ''}</div>` : '<div class="pf-bl muted">빈칸 채우기를 아직 하지 않았어요.</div>'}
+    ${es.map((e, i) => { const t = get(e.write); return `<div class="pf-es"><div class="tm">서술형 ${i + 1} · ${esc(e.label || '')}</div>${t ? esc(t) : '<span class="muted">아직 쓰지 않았어요.</span>'}</div>`; }).join('')}</div>`;
+}
+let pfSubj = '';
+window.setPfSubj = id => { pfSubj = id; loadPortfolio(); };
 async function loadPortfolio() {
   let all = {};
   try { const r = await api('myNotes'); if (r.ok) all = r.notes || {}; } catch { }
   const box = $('pf'); if (!box) return;
-  const html = SUBJECTS.map(s => {
+  const have = SUBJECTS.filter(s => allUnits(s).some(u => u.lesson && LESSONS[u.lesson]));
+  if (!have.some(s => s.id === pfSubj)) pfSubj = have.length ? have[0].id : '';
+  const html = (have.length > 1 ? subjPills(pfSubj, have, 'setPfSubj') : '') + have.filter(s => s.id === pfSubj).map(s => {
     const units = allUnits(s).filter(u => u.lesson && LESSONS[u.lesson]);
     if (!units.length) return '';
     return `<h2 style="color:${sc(s)};display:flex;align-items:center;gap:8px">${subjIcon(s)} ${esc(s.title)}</h2>
@@ -1682,7 +1704,7 @@ async function loadPortfolio() {
         return `<a class="pf-card" href="#/${s.id}/${encodeURIComponent(u.code)}" style="--c:${sc(s)}">
           <div class="pf-top"><div><div class="code">${esc(u.code)}</div><b>${esc(u.title)}</b></div>
             <div class="pf-score">${n.ox ? `OX <b>${esc(n.ox)}</b>` : '<span class="muted">OX 미응시</span>'}</div></div>
-          <div class="pf-sum">${n.summary ? esc(n.summary) : '<span class="muted">아직 개념 정리를 하지 않았어요.</span>'}</div>
+          ${newFlow(LESSONS[u.lesson]) ? pfNewHtml(LESSONS[u.lesson], k => n[k]) : `<div class="pf-sum">${n.summary ? esc(n.summary) : '<span class="muted">아직 개념 정리를 하지 않았어요.</span>'}</div>`}
           ${n.question ? `<div class="pf-q">${ic('chat')} 내가 남긴 질문 · ${esc(n.question)}</div>` : ''}
           ${n.fbScore || n.fbComment ? `<div style="margin-top:10px">${fbBox(n.fbScore, n.fbComment)}</div>` : ''}
           ${bar(p, false)}
@@ -1803,14 +1825,23 @@ function fmtTime(t) {
   return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 function noteOf(id, unit, field) { return dashData.notes.find(n => n.id === id && n.unit === unit && n.field === field); }
+/* 빈칸 채우기·서술형으로 바뀐 단원인지, 그 단원의 서술형 문항들 */
+const newFlow = L => !!L && L.steps.some(st => st.id === 'blank' || st.id === 'essay');
+const essaysOf = L => L ? L.steps.filter(st => st.id === 'essay').flatMap(st => st.blocks.filter(b => b.write)) : [];
+const submittedOf = (s, x) => newFlow(x.L) ? essaysOf(x.L).some(e => noteOf(s.id, x.key, e.write)) : !!noteOf(s.id, x.key, 'summary');
+const scoreRatio = t => { const [g, n] = String(t || '').split('/').map(Number); return n ? g / n : null; };
+const subjPills = (cur, ids, fn, all) => `<div class="spills" role="tablist">${all ? `<button class="${cur === '' ? 'on' : ''}" onclick="${fn}('')">전체</button>` : ''}${ids.map(sj => `<button class="${cur === sj.id ? 'on' : ''}" style="--c:${sc(sj)}" onclick="${fn}('${sj.id}')">${esc(sj.title)}</button>`).join('')}</div>`;
 const curStuds = () => dashData.students.filter(s => !dashState.cls || (s.cls || classOf(s.id)) === dashState.cls).sort((a, b) => a.id.localeCompare(b.id));
 
 function viewDash() {
   if (!isTeacher()) return `<div class="crumbs"><a href="#/">홈</a>${ic('right')}대시보드</div><h1>선생님 대시보드</h1>
     <p class="lead">선생님 계정으로 로그인해야 볼 수 있어요.</p>${session ? '' : '<button class="btn primary" onclick="openLogin()">로그인</button>'}`;
   if (!dashData) { setTimeout(loadDash, 0); return `<h1>선생님 대시보드</h1><p class="lead">기록을 불러오는 중…</p>`; }
-  const units = lessonUnits();
-  if (!dashState.unit && units.length) dashState.unit = units[0].key;
+  const allU = lessonUnits();
+  if (!dashState.subj || !allU.some(u => u.s.id === dashState.subj)) dashState.subj = allU.length ? allU[0].s.id : '';
+  const subjs = [...new Map(allU.map(u => [u.s.id, u.s])).values()];
+  const units = allU.filter(u => u.s.id === dashState.subj);
+  if (!units.some(u => u.key === dashState.unit)) dashState.unit = units.length ? units[0].key : '';
   const classes = [...new Set(dashData.students.map(s => s.cls || classOf(s.id)))].sort();
   return `<div class="dash">
     <div class="dash-top">
@@ -1824,13 +1855,15 @@ function viewDash() {
       </div>
     </div>
     <div id="open-panel">${dashState.openPanel && openData ? openPanelHtml() : ''}</div>
+    ${subjs.length > 1 ? subjPills(dashState.subj, subjs, 'setDashSubj') : ''}
     <div class="dash-filters">
-      <label>단원 <select onchange="dashState.unit=this.value;renderDash()">${units.map(x => `<option value="${esc(x.key)}" ${x.key === dashState.unit ? 'selected' : ''}>${esc(x.s.title)} ${esc(x.u.code)} ${esc(x.u.title)}</option>`).join('')}</select></label>
+      <label>단원 <select onchange="dashState.unit=this.value;renderDash()">${units.map(x => `<option value="${esc(x.key)}" ${x.key === dashState.unit ? 'selected' : ''}>${esc(x.u.code)} ${esc(x.u.title)}</option>`).join('')}</select></label>
       <label>반 <select onchange="dashState.cls=this.value;dashState.student='';renderDash()"><option value="">전체</option>${classes.map(c => `<option ${c === dashState.cls ? 'selected' : ''}>${c}</option>`).join('')}</select></label>
     </div>
     <div id="dash-body">${dashBody()}</div>
   </div>`;
 }
+window.setDashSubj = id => { dashState.subj = id; dashState.unit = ''; dashState.student = ''; $('app').innerHTML = viewDash(); };
 window.renderDash = () => { const b = $('dash-body'); if (b) b.innerHTML = dashBody(); };
 window.setDash = (k, v) => { dashState[k] = v; renderDash(); };
 
@@ -1838,26 +1871,49 @@ function dashBody() {
   const x = lessonUnits().find(v => v.key === dashState.unit);
   if (!x) return '<p>점검 단원이 아직 없어요.</p>';
   const studs = curStuds();
-  const sub = studs.filter(s => noteOf(s.id, x.key, 'summary')).length;
+  const nf = newFlow(x.L), sub = studs.filter(s => submittedOf(s, x)).length;
+  const bls = studs.map(s => noteOf(s.id, x.key, 'blank')).filter(Boolean), blAvg = bls.length ? (bls.reduce((a, n) => a + (scoreRatio(n.text) || 0), 0) / bls.length * 100).toFixed(0) : '-';
   const oxs = studs.map(s => noteOf(s.id, x.key, 'ox')).filter(Boolean);
   const avg = oxs.length ? (oxs.reduce((a, n) => { const [g, t] = n.text.split('/').map(Number); return a + (t ? g / t : 0); }, 0) / oxs.length * 100).toFixed(0) : '-';
   const fbs = studs.map(s => noteOf(s.id, x.key, 'fbScore')).filter(n => n && n.text !== '');
   const fbAvg = fbs.length ? (fbs.reduce((a, n) => a + Number(n.text), 0) / fbs.length).toFixed(1) : '-';
   const nq = studs.filter(s => (noteOf(s.id, x.key, 'question') || {}).text).length;
-  const tabs = [['read', 'pencil', '개념 정리 모아 읽기 · 채점'], ['items', 'chart', '문항별 정답률'], ['student', 'user', '학생별 포트폴리오'], ['q', 'chat', '학생 질문', nq], ['grid', 'grid', '한눈에 보기']];
+  const tabs = [['read', 'pencil', nf ? '서술형 모아 읽기 · 채점' : '개념 정리 모아 읽기 · 채점'], ['items', 'chart', '문항별 정답률'], ['student', 'user', '학생별 포트폴리오'], ['q', 'chat', '학생 질문', nq], ['grid', 'grid', '한눈에 보기']];
   return `
     <div class="tiles">
-      <div class="tile"><span>개념 정리 제출</span><b>${sub}<small> / ${studs.length}명</small></b></div>
+      ${nf ? `<div class="tile"><span>빈칸 응시</span><b>${bls.length}<small> / ${studs.length}명</small></b></div>
+      <div class="tile"><span>빈칸 평균 정답률</span><b>${blAvg}<small>${blAvg === '-' ? '' : '%'}</small></b></div>
+      <div class="tile"><span>서술형 제출</span><b>${sub}<small> / ${studs.length}명</small></b></div>` : `<div class="tile"><span>개념 정리 제출</span><b>${sub}<small> / ${studs.length}명</small></b></div>`}
       <div class="tile"><span>OX 응시</span><b>${oxs.length}<small> / ${studs.length}명</small></b></div>
       <div class="tile"><span>OX 평균 정답률</span><b>${avg}<small>${avg === '-' ? '' : '%'}</small></b></div>
-      <div class="tile" id="fb-tile"><span>개념 정리 평균 (${fbs.length}명 채점)</span><b>${fbAvg}<small>${fbAvg === '-' ? '' : ' / 5'}</small></b></div>
+      <div class="tile" id="fb-tile"><span>${nf ? '선생님 채점 평균' : '개념 정리 평균'} (${fbs.length}명 채점)</span><b>${fbAvg}<small>${fbAvg === '-' ? '' : ' / 5'}</small></b></div>
     </div>
     <div class="tabs">${tabs.map(([k, i, t, n]) => `<button class="${dashState.tab === k ? 'on' : ''}" onclick="setDash('tab','${k}')">${ic(i)}${t}${n ? `<span class="bd">${n}</span>` : ''}</button>`).join('')}</div>
     ${{ read: dashRead, items: dashItems, student: dashStudent, q: dashQuestions, grid: dashGrid }[dashState.tab](x, studs)}`;
 }
 
 /* ① 개념 정리 모아 읽기 · 채점 */
+function dashReadNew(x, studs) {
+  const es = essaysOf(x.L), miss = studs.filter(s => !submittedOf(s, x));
+  const list = dashState.onlyMissing ? miss : studs;
+  return `<div class="dtools"><label class="chk"><input type="checkbox" ${dashState.onlyMissing ? 'checked' : ''} onchange="setDash('onlyMissing',this.checked)"> 서술형 미제출 학생만 보기</label>
+    ${miss.length ? `<button class="btn sm" onclick="copyMissing()">${ic('copy')} 미제출 ${miss.length}명 이름 복사</button>` : ''}</div>
+    <div class="rows">${list.map(s => {
+      const bl = noteOf(s.id, x.key, 'blank'), bf = noteOf(s.id, x.key, 'blankFirst'), ox = noteOf(s.id, x.key, 'ox');
+      return `<div class="drow ${submittedOf(s, x) ? '' : 'miss'}">
+        <div class="who"><b>${esc(s.name)}</b><span>${esc(s.id)}</span></div>
+        <div class="txt">${es.map(e => {
+          const n = noteOf(s.id, x.key, e.write), kws = (e.hint || '').split(',').map(w => w.trim()).filter(Boolean), flat = n ? n.text.replace(/\s+/g, '').toLowerCase() : '';
+          return `<div class="eq"><div class="tm">${esc(e.label || '')}</div><span class="body">${n ? esc(n.text) : '미제출'}</span>
+            ${n && kws.length ? `<div class="kw">${kws.map(w => `<span class="${flat.includes(w.replace(/\s+/g, '').toLowerCase()) ? 'hit' : ''}">${esc(w)}</span>`).join('')}</div>` : ''}
+            ${n ? `<div class="tm">${fmtTime(n.first) === fmtTime(n.last) ? `제출 ${fmtTime(n.first)}` : `처음 ${fmtTime(n.first)} · 수정 ${fmtTime(n.last)}`}</div>` : ''}</div>`;
+        }).join('')}${fbForm(s.id, x.key)}</div>
+        <div class="sc">${bl ? `빈칸 <b>${esc(bl.text)}</b>${bf && bf.text !== bl.text ? `<div class="oxd">첫 풀이 ${esc(bf.text)}</div>` : ''}` : '<span class="muted">빈칸 -</span>'}<div>${ox ? `OX <b>${esc(ox.text)}</b>` : '<span class="muted">OX -</span>'}</div></div>
+      </div>`;
+    }).join('') || '<p class="muted">해당하는 학생이 없어요.</p>'}</div>`;
+}
 function dashRead(x, studs) {
+  if (newFlow(x.L)) return dashReadNew(x, studs);
   const list = dashState.onlyMissing ? studs.filter(s => !noteOf(s.id, x.key, 'summary')) : studs;
   const kws = hintOf(x.L), miss = studs.filter(s => !noteOf(s.id, x.key, 'summary'));
   return `<div class="dtools"><label class="chk"><input type="checkbox" ${dashState.onlyMissing ? 'checked' : ''} onchange="setDash('onlyMissing',this.checked)"> 미제출 학생만 보기</label>
@@ -1876,7 +1932,7 @@ ${times ? `<div class="tm">${times}</div>` : ''}${fbForm(s.id, x.key)}</div>
 }
 window.copyMissing = async () => {
   const x = lessonUnits().find(v => v.key === dashState.unit);
-  const names = curStuds().filter(s => !noteOf(s.id, x.key, 'summary')).map(s => s.name).join(', ');
+  const names = curStuds().filter(s => !submittedOf(s, x)).map(s => s.name).join(', ');
   try { await navigator.clipboard.writeText(names); toast('미제출 학생 이름을 복사했어요.'); } catch { toast(names); }
 };
 
@@ -1950,12 +2006,12 @@ function dashStudent(x, studs) {
   if (!dashState.student || !studs.find(s => s.id === dashState.student)) dashState.student = studs[0] ? studs[0].id : '';
   const st = studs.find(s => s.id === dashState.student);
   return `<label class="pick">학생 <select onchange="setDash('student',this.value)">${studs.map(s => `<option value="${esc(s.id)}" ${s.id === dashState.student ? 'selected' : ''}>${esc(s.id)} ${esc(s.name)}</option>`).join('')}</select></label>
-    ${!st ? '' : `<div class="pf-list">${lessonUnits().map(u => {
+    ${!st ? '' : `<div class="pf-list">${lessonUnits().filter(u => u.s.id === dashState.subj).map(u => {
       const sm = noteOf(st.id, u.key, 'summary'), ox = noteOf(st.id, u.key, 'ox'), d = noteOf(st.id, u.key, 'oxDetail'), q = noteOf(st.id, u.key, 'question');
       return `<div class="pf-card" style="--c:${sc(u.s)}">
         <div class="pf-top"><div><div class="code">${esc(u.s.title)} ${esc(u.u.code)}</div><b>${esc(u.u.title)}</b></div>
           <div class="pf-score">${ox ? `OX <b>${esc(ox.text)}</b>${d ? `<div class="oxd">${[...d.text].map(c => c === '1' ? '○' : '×').join(' ')}</div>` : ''}` : '<span class="muted">OX 미응시</span>'}</div></div>
-        <div class="pf-sum">${sm ? esc(sm.text) : '<span class="muted">개념 정리 미제출</span>'}</div>
+        ${newFlow(u.L) ? pfNewHtml(u.L, k => (noteOf(st.id, u.key, k) || {}).text) : `<div class="pf-sum">${sm ? esc(sm.text) : '<span class="muted">개념 정리 미제출</span>'}</div>`}
         ${sm ? `<div class="tm">처음 ${fmtTime(sm.first)}${fmtTime(sm.first) !== fmtTime(sm.last) ? ` · 수정 ${fmtTime(sm.last)}` : ''}</div>` : ''}
         ${noteOf(st.id, u.key, 'confuse') ? `<div class="tm">헷갈린 개념: ${esc(noteOf(st.id, u.key, 'confuse').text)}</div>` : ''}
         ${q && q.text ? `<div class="tm">${ic('chat')} 질문: ${esc(q.text)}</div>` : ''}
@@ -1973,14 +2029,14 @@ function dashQuestions(x, studs) {
 
 /* ⑤ 한눈에 보기 (학생 × 단원) */
 function dashGrid(x, studs) {
-  const units = lessonUnits();
+  const units = lessonUnits().filter(u => u.s.id === dashState.subj);
   return `<div style="overflow-x:auto"><table class="lt" style="min-width:520px"><thead><tr><th>학번</th><th>이름</th>${units.map(u => `<th>${esc(u.u.code)} ${esc(u.u.title)}</th>`).join('')}</tr></thead>
     <tbody>${studs.map(s => `<tr><td>${esc(s.id)}</td><td>${esc(s.name)}</td>${units.map(u => {
-      const sm = noteOf(s.id, u.key, 'summary'), ox = noteOf(s.id, u.key, 'ox'), fb = noteOf(s.id, u.key, 'fbScore');
+      const sm = submittedOf(s, u), bl = noteOf(s.id, u.key, 'blank'), ox = noteOf(s.id, u.key, 'ox'), fb = noteOf(s.id, u.key, 'fbScore');
       let low = false; if (ox) { const [g, t] = ox.text.split('/').map(Number); low = t && g / t < .6; }
-      return `<td>${sm ? ic('check') : '<span class="muted">–</span>'} <span style="${low ? 'color:var(--coral);font-weight:700' : ''}">${ox ? esc(ox.text) : ''}</span>${fb && fb.text !== '' ? ` <span class="muted">· ${esc(fb.text)}점</span>` : ''}</td>`;
+      return `<td>${sm ? ic('check') : '<span class="muted">–</span>'}${bl ? ` <span class="muted">빈칸 ${esc(bl.text)}</span>` : ''} <span style="${low ? 'color:var(--coral);font-weight:700' : ''}">${ox ? esc(ox.text) : ''}</span>${fb && fb.text !== '' ? ` <span class="muted">· ${esc(fb.text)}점</span>` : ''}</td>`;
     }).join('')}</tr>`).join('')}</tbody></table></div>
-    <p class="muted" style="font-size:12.5px">✓ 개념 정리 제출 · OX 점수 · 선생님 채점 점수 (OX 정답률 60% 미만은 빨간색)</p>`;
+    <p class="muted" style="font-size:12.5px">✓ 개념 정리·서술형 제출 · 빈칸 점수 · OX 점수 · 선생님 채점 점수 (OX 정답률 60% 미만은 빨간색)</p>`;
 }
 
 /* 엑셀(CSV)로 내려받기 — 지금 고른 단원·반 */
@@ -1988,10 +2044,11 @@ window.exportCsv = () => {
   const x = lessonUnits().find(v => v.key === dashState.unit); if (!x) return;
   const studs = curStuds(), qs = (oxBlockOf(x.L) || { ox: [] }).ox;
   const g = (id, f) => (noteOf(id, x.key, f) || {});
-  const head = ['학번', '이름', '개념 정리', '처음 제출', '마지막 수정', 'OX 점수', ...qs.map((_, i) => `OX ${i + 1}번 결과`), '헷갈린 개념', '궁금한 점', '선생님 점수', '선생님 코멘트'];
+  const nf = newFlow(x.L), es = essaysOf(x.L);
+  const head = ['학번', '이름', '개념 정리', '처음 제출', '마지막 수정', ...(nf ? ['빈칸 점수(최근)', '빈칸 점수(첫 풀이)', ...es.map((e, i) => `서술형 ${i + 1}`)] : []), 'OX 점수', ...qs.map((_, i) => `OX ${i + 1}번 결과`), '헷갈린 개념', '궁금한 점', '선생님 점수', '선생님 코멘트'];
   const rows = studs.map(s => {
     const d = g(s.id, 'oxDetail').text || '';
-    return [s.id, s.name, g(s.id, 'summary').text || '', fmtTime(g(s.id, 'summary').first), fmtTime(g(s.id, 'summary').last), g(s.id, 'ox').text || '',
+    return [s.id, s.name, g(s.id, 'summary').text || '', fmtTime(g(s.id, 'summary').first), fmtTime(g(s.id, 'summary').last), ...(nf ? [g(s.id, 'blank').text || '', g(s.id, 'blankFirst').text || '', ...es.map(e => g(s.id, e.write).text || '')] : []), g(s.id, 'ox').text || '',
       ...qs.map((_, i) => d[i] === '1' ? '정답' : d[i] === '0' ? '오답' : ''), g(s.id, 'confuse').text || '', g(s.id, 'question').text || '', g(s.id, 'fbScore').text || '', g(s.id, 'fbComment').text || ''];
   });
   const cell = c => { let t = String(c ?? ''); if (/^[=+\-@]/.test(t)) t = "'" + t; return `"${t.replace(/"/g, '""')}"`; };
