@@ -124,6 +124,7 @@ function onOpen() {
     .addItem('진도 공개 표 만들기·새로고침', 'buildOpenSheet')
     .addItem('주차까지 열기 (반 선택)', 'openByWeek')
     .addItem('사이트 내용 바로 반영', 'clearContentCache')
+    .addItem('필터·드롭다운 적용', 'applySheetTools')
     .addItem('내용 탭 만들기 (처음 한 번)', 'setupContent')
     .addToUi();
 }
@@ -417,18 +418,24 @@ function userOf(token) {
 }
 
 /* '진도공개' 탭 읽기 → { classes, map: {단원코드: {반: true/false}}, week: {단원코드: 주차} } */
+function openSheets() {   // '통합과학1 진도공개', '통합과학2 진도공개', '지구과학 진도공개' … (옛 '진도공개' 한 장도 읽어요)
+  return SpreadsheetApp.getActive().getSheets().filter(sh => { const n = sh.getName(); return n === SHEET_OPEN || n.endsWith(' ' + SHEET_OPEN); });
+}
 function readOpen() {
-  const sh = SpreadsheetApp.getActive().getSheetByName(SHEET_OPEN);
   const res = { classes: [], map: {}, week: {} };
-  if (!sh || sh.getLastRow() < 1) return res;
-  const rows = sh.getDataRange().getDisplayValues();
-  res.classes = rows[0].slice(4).map(x => String(x).trim()).filter(Boolean);
-  rows.slice(1).forEach(r => {
-    const code = String(r[0]).trim(); if (!code) return;
-    res.week[code] = String(r[3]).trim();
-    res.map[code] = {};
-    res.classes.forEach((c, i) => { res.map[code][c] = String(r[4 + i]).trim().toUpperCase() === 'TRUE'; });
+  openSheets().forEach(sh => {
+    if (sh.getLastRow() < 1) return;
+    const rows = sh.getDataRange().getDisplayValues();
+    const cl = rows[0].slice(4).map(x => String(x).trim()).filter(Boolean);
+    cl.forEach(c => { if (!res.classes.includes(c)) res.classes.push(c); });
+    rows.slice(1).forEach(r => {
+      const code = String(r[0]).trim(); if (!code) return;
+      res.week[code] = String(r[3]).trim();
+      res.map[code] = {};
+      cl.forEach((c, i) => { res.map[code][c] = String(r[4 + i]).trim().toUpperCase() === 'TRUE'; });
+    });
   });
+  res.classes.sort();
   return res;
 }
 
@@ -459,23 +466,31 @@ function buildOpenSheet() {
   const old = readOpen();
   const classes = [...new Set([...old.classes, ...readStudents().filter(s => s.role !== TEACHER).map(s => classOf(s.id))])].sort();
   const units = readTable(T_UNITS).filter(u => u['단원코드'] && u['공개'] !== 'X')
-    .sort((a, b) => (a['과목'] || '').localeCompare(b['과목'] || '', 'ko') || a['단원코드'].localeCompare(b['단원코드'], 'ko', { numeric: true }));
+    .sort((a, b) => a['단원코드'].localeCompare(b['단원코드'], 'ko', { numeric: true }));
+  const bySubj = {};
+  units.forEach(u => { const s = u['과목'] || '기타'; (bySubj[s] = bySubj[s] || []).push(u); });
+  const legacy = ss.getSheetByName(SHEET_OPEN);   // 옛 한 장짜리 표는 읽은 뒤 과목별 탭으로 바꿔요
   const head = ['단원코드', '제목', '과목', '주차', ...classes];
-  const rows = units.map(u => {
-    const code = u['단원코드'];
-    return [code, u['제목'], u['과목'], old.week[code] || '', ...classes.map(c => !!(old.map[code] && old.map[code][c]))];
-  });
-  let sh = ss.getSheetByName(SHEET_OPEN);
-  if (sh) sh.clear(); else sh = ss.insertSheet(SHEET_OPEN);
-  sh.getRange(1, 1, 1, head.length).setValues([head]).setFontWeight('bold').setBackground('#e8f5f3');
-  if (rows.length) {
+  const made = [];
+  Object.keys(bySubj).sort().forEach(subj => {
+    const rows = bySubj[subj].map(u => {
+      const code = u['단원코드'];
+      return [code, u['제목'], subj, old.week[code] || '', ...classes.map(c => !!(old.map[code] && old.map[code][c]))];
+    });
+    const name = subj + ' ' + SHEET_OPEN;
+    let sh = ss.getSheetByName(name);
+    if (sh) { const f = sh.getFilter(); if (f) f.remove(); sh.clear(); sh.getRange(1, 1, sh.getMaxRows(), sh.getMaxColumns()).clearDataValidations(); } else sh = ss.insertSheet(name);
+    sh.getRange(1, 1, 1, head.length).setValues([head]).setFontWeight('bold').setBackground('#e8f5f3');
     sh.getRange(2, 1, rows.length, 3).setNumberFormat('@');
     sh.getRange(2, 1, rows.length, head.length).setValues(rows);
     if (classes.length) sh.getRange(2, 5, rows.length, classes.length).insertCheckboxes();
-  }
-  sh.setFrozenRows(1); sh.setFrozenColumns(2);
-  sh.setColumnWidth(2, 220);
-  SpreadsheetApp.getActive().toast('체크한 반에 그 단원이 열려요. 주차 칸에 숫자를 쓰면 [주차까지 열기]를 쓸 수 있어요.');
+    sh.setFrozenRows(1); sh.setFrozenColumns(2);
+    sh.setColumnWidth(2, 220);
+    made.push(sh);
+  });
+  if (legacy && !made.some(s => s.getName() === SHEET_OPEN)) ss.deleteSheet(legacy);
+  applySheetTools();
+  ss.toast('과목별 [진도공개] 탭에서 체크한 반에 그 단원이 열려요. 주차 칸에 숫자를 쓰면 [주차까지 열기]를 쓸 수 있어요.');
 }
 
 /* 시트 메뉴: N주차까지 열기 (주차 칸에 숫자가 있는 단원만 — N주차 이하는 열고, 더 뒤 주차는 닫아요) */
@@ -494,15 +509,16 @@ function openByWeek() {
 function openSetCells(fn) {
   const lock = LockService.getScriptLock(); lock.waitLock(10000);
   try {
-    const sh = SpreadsheetApp.getActive().getSheetByName(SHEET_OPEN);
-    if (!sh) return { ok: false, error: '먼저 시트 메뉴에서 [진도 공개 표 만들기·새로고침]을 눌러 주세요.' };
-    const range = sh.getDataRange(), vals = range.getDisplayValues(), changed = fn(vals, sh);
+    const shs = openSheets();
+    if (!shs.length) return { ok: false, error: '먼저 시트 메뉴에서 [진도 공개 표 만들기·새로고침]을 눌러 주세요.' };
+    let changed = 0;
+    shs.forEach(sh => { changed += fn(sh.getDataRange().getDisplayValues(), sh) || 0; });
     return { ok: true, changed };
   } finally { lock.releaseLock(); }
 }
 
 function openGet() {
-  if (!SpreadsheetApp.getActive().getSheetByName(SHEET_OPEN)) buildOpenSheet();
+  if (!openSheets().length) buildOpenSheet();
   const o = readOpen();
   const units = readTable(T_UNITS).filter(u => u['단원코드'] && u['공개'] !== 'X').map(u => ({ code: u['단원코드'], title: u['제목'], subject: u['과목'], week: o.week[u['단원코드']] || '' }));
   return { ok: true, classes: o.classes, units, map: o.map };
@@ -532,4 +548,38 @@ function openWeek(req) {
     }
     return changed;
   });
+}
+
+/* ---------- 시트 편의: 필터·드롭다운 ---------- */
+// 메뉴 [필터·드롭다운 적용]을 누르면 모든 탭에 필터와 선택 목록이 붙어요.
+function applySheetTools() {
+  const ss = SpreadsheetApp.getActive();
+  const list = (values, strict) => SpreadsheetApp.newDataValidation().requireValueInList(values, true).setAllowInvalid(!strict).build();
+  const colOf = (sh, name) => sh.getRange(1, 1, 1, Math.max(1, sh.getLastColumn())).getDisplayValues()[0].map(h => String(h).trim()).indexOf(name) + 1;
+  const dropdown = (sh, name, values, strict) => {
+    const c = colOf(sh, name);
+    if (c > 0) sh.getRange(2, c, Math.max(sh.getMaxRows() - 1, 1), 1).setDataValidation(list(values, strict));
+  };
+  const SUBJ = ['통합과학1', '통합과학2', '지구과학'];
+  ss.getSheets().forEach(sh => {
+    const n = sh.getName();
+    if (sh.getLastRow() < 1 || sh.getLastColumn() < 1) return;
+    const base = CONTENT_TABS.find(b => n === b || n.endsWith(' ' + b)) || (n === SHEET_OPEN || n.endsWith(' ' + SHEET_OPEN) ? SHEET_OPEN : n);
+    if (base === '학생명단') {
+      dropdown(sh, '역할', ['학생', '교사'], false);
+      dropdown(sh, '과목', ['통합과학', '통합과학1', '통합과학2', '지구과학'], false);   // 두 과목은 직접 '통합과학1,지구과학'처럼 써도 돼요
+    } else if (base === T_UNITS) {
+      dropdown(sh, '과목', SUBJ, false);
+      dropdown(sh, '공개', ['O', 'X'], false);
+    } else if (base === T_OX) {
+      dropdown(sh, '정답', ['O', 'X'], true);
+    } else if (base === SHEET_OPEN) {
+      dropdown(sh, '주차', Array.from({ length: 40 }, (_, i) => String(i + 1)), false);
+      dropdown(sh, '과목', SUBJ, false);
+    } else if (!(base === T_NEWS || base === T_CONFUSE || n === SHEET_PROGRESS || n === SHEET_NOTES)) return;
+    const old = sh.getFilter(); if (old) old.remove();
+    sh.getDataRange().createFilter();
+    sh.setFrozenRows(1);
+  });
+  ss.toast('필터(머리글 옆 ▼)와 선택 목록을 붙였어요.');
 }
