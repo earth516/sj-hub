@@ -6,7 +6,7 @@
 
    필요한 시트 탭 (처음 한 번 setup 을 실행하면 자동으로 만들어져요)
    - 학생명단 : 학번 | 이름 | 비밀번호 | 역할 | 과목   (역할 칸에 '교사'라고 쓰면 대시보드를 볼 수 있어요.
-                 과목 칸은 비워 두면 모든 과목이 보이고, '통합과학' 또는 '지구과학,통합과학'처럼 쓰면 그 과목만 보여요)
+                 과목 칸은 비워 두면 모든 과목이 보이고, '통합과학'(통합과학1·2 모두), '통합과학1', '지구과학,통합과학2'처럼 쓰면 그 과목만 보여요)
    - 진도공개 : 단원코드 | 제목 | 과목 | 주차 | (반마다 칸)   ← 칸에 체크하면 그 반에 단원이 열려요.
                  시트 메뉴 [SJ 대시보드] → [진도 공개 표 만들기·새로고침]으로 만들어요.
    - 진도     : 학번 | 이름 | 활동 | 완료 시각
@@ -130,18 +130,23 @@ function onOpen() {
 
 /* 내용 탭을 고치면 사이트에 반영되도록 저장해 둔 내용을 지워요 */
 function onEdit(e) {
-  if (e && e.range && CONTENT_TABS.includes(e.range.getSheet().getName())) clearContentCache();
+  if (e && e.range && isContentTab(e.range.getSheet().getName())) clearContentCache();
 }
 function clearContentCache() { CacheService.getScriptCache().remove(CONTENT_CACHE); }
 
 /* 표 한 장을 [{제목: 값}] 으로 읽기 */
-function readTable(name) {
-  const sh = SpreadsheetApp.getActive().getSheetByName(name);
-  if (!sh) return [];
-  const rows = sh.getDataRange().getDisplayValues();
-  const head = rows[0].map(h => String(h).trim());
-  return rows.slice(1).filter(r => r.some(c => String(c).trim() !== ''))
-    .map(r => Object.fromEntries(head.map((h, i) => [h, String(r[i] ?? '').trim()])));
+function isContentTab(n) { return CONTENT_TABS.some(b => n === b || n.endsWith(' ' + b)); }
+function readTable(name) {   // '단원' 이라고 부르면 '통합과학1 단원', '지구과학 단원' 같은 탭도 함께 읽어요
+  const out = [];
+  SpreadsheetApp.getActive().getSheets().forEach(sh => {
+    const n = sh.getName();
+    if (n !== name && !n.endsWith(' ' + name)) return;
+    const rows = sh.getDataRange().getDisplayValues();
+    const head = rows[0].map(h => String(h).trim());
+    rows.slice(1).filter(r => r.some(c => String(c).trim() !== ''))
+      .forEach(r => out.push(Object.fromEntries(head.map((h, i) => [h, String(r[i] ?? '').trim()]))));
+  });
+  return out;
 }
 const normOX = v => /^(o|○|ㅇ|true|참|맞음)$/i.test(String(v).trim()) ? 'O' : 'X';
 
@@ -441,7 +446,7 @@ function contentFor(user) {
   const data = getContent();
   const open = readOpen();
   const subj = user && user.role !== TEACHER && user.subj ? user.subj.split(/[,\s]+/).filter(Boolean) : null;
-  const units = data.units.filter(u => !subj || subj.includes(u.subject)).map(u => {
+  const units = data.units.filter(u => !subj || subj.some(x => u.subject === x || u.subject.indexOf(x) === 0)).map(u => {
     if (isOpenFor(u.code, user, open)) return u;
     return { subject: u.subject, chapter: u.chapter, code: u.code, title: u.title, goal: u.goal, time: u.time, locked: true, week: open.week[u.code] || '' };
   });
