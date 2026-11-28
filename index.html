@@ -564,7 +564,7 @@ body.sky-on{overflow-x:clip}
 
 <footer>
   <div class="footer-top">
-    <p class="footer-copy">© 교사 이상준. All rights reserved.<br>오류제보/문의: <a href="mailto:cepheid@kakao.com">cepheid@gmail.com</a></p>
+    <p class="footer-copy">© 교사 이상준. All rights reserved.<br>오류제보/문의: <a href="mailto:cepheid@kakao.com">cepheid@kakao.com</a></p>
     <div class="footer-links">
       <a class="yt-badge" href="https://www.youtube.com/@science_earth" target="_blank" rel="noopener"><span class="play"></span> 유튜브</a>
       <a class="yt-badge" href="https://linktr.ee/earth_sj" target="_blank" rel="noopener"><span class="badge-icon">🌍</span> Linktree</a>
@@ -1005,11 +1005,11 @@ async function loadMyStat() {
 }
 
 function unitRow(s, u) {
-  if (u.locked) return `<span class="urow lock"><span class="code">${esc(u.code)}</span><span class="t">${esc(u.title)}</span><span class="tag">${ic('lock')} ${u.week ? esc(u.week) + '주차에 열려요' : '아직 안 열렸어요'}</span></span>`;
+  if (u.locked) return `<span class="urow lock"><span class="t">${esc(u.title)}</span><span class="tag">${ic('lock')} ${u.week ? esc(u.week) + '주차에 열려요' : '아직 안 열렸어요'}</span></span>`;
   const p = progressOf(s, [u]), L = u.lesson && LESSONS[u.lesson];
   const end = session && p.total ? (p.n === p.total ? `<span style="color:var(--ok)">${ic('check-circle')}</span>` : p.n ? `<span class="mp"><i style="width:${p.pct}%"></i></span>` : '') : '';
   return `<a class="urow" href="#/${s.id}/${encodeURIComponent(u.code)}">
-    <span class="code">${esc(u.code)}</span><span class="t">${esc(u.title)}</span>
+    <span class="t">${esc(u.title)}</span>
     ${L ? `<span class="tag">${esc(L.time || '5분')} 점검</span>` : `<span class="mini">${itemsOf(s, u).map(it => ic(it.icon)).join('')}</span>`}
     <span class="end">${end}${ic('right')}</span></a>`;
 }

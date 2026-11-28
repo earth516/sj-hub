@@ -106,26 +106,6 @@ const SUBJECTS = [
     id: 'int2', title: '통합과학2', color: '#f0c27a', colorLight: '#a8660b', bank: LINKS.intBank, icon: '⚗️',
     desc: '변화와 다양성 · 환경과 에너지 · 과학과 미래 사회',
     chapters: [
-      { title: '실험·문제은행 자료', units: [
-        { code: 's2-lab-1-1-1', title: '지질 시대의 환경과 생물 변화 (실험)', steps: [
-          { type: 'lab',   title: '지질시대 화석 박람회', url: LAB('integrated-science/earth-science/geo-eras-expo') },
-          { type: 'quiz',  title: '문제은행 · 통합과학2', url: LINKS.intBank },
-        ]},
-        { code: 's2-lab-1-2-1', title: '산화와 환원 (실험)', steps: [
-          { type: 'lab',   title: '구리판 가열 실험', url: LAB('integrated-science/chemistry/copper-oxidation') },
-          { type: 'lab',   title: '아연판과 황산 구리(Ⅱ) 수용액의 반응', url: LAB('integrated-science/chemistry/zinc-copper-reaction') },
-          { type: 'quiz',  title: '문제은행 · 산화와 환원', url: LINKS.intBank },
-        ]},
-        { code: 's2-lab-1-2-2', title: '산과 염기 (실험)', steps: [
-          { type: 'lab',   title: '산성과 염기성을 나타내는 이온의 확인', url: LAB('integrated-science/chemistry/ion-movement') },
-          { type: 'lab',   title: '중화 반응 - 이온 모형 실험', url: LAB('integrated-science/chemistry/neutralization-reaction') },
-          { type: 'quiz',  title: '문제은행 · 산과 염기', url: LINKS.intBank },
-        ]},
-        { code: 's2-lab-2-2-2', title: '전기 에너지의 생산 (실험)', steps: [
-          { type: 'lab',   title: '자석과 코일의 전자기 유도', url: LAB('integrated-science/physics/electromagnetic-induction') },
-          { type: 'quiz',  title: '문제은행 · 전기 에너지', url: LINKS.intBank },
-        ]},
-      ]},
     ],
   },
 ];
