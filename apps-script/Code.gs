@@ -33,8 +33,8 @@ const TOKEN_HOURS = 6;          // 로그인 유지 시간 (최대 6시간, 지�
 const MAX_FAILS = 5;            // 비밀번호를 이 횟수만큼 틀리면
 const LOCK_MINUTES = 10;        // 이 시간 동안 로그인을 막아요
 const LOCKED_FIELDS = ['ox', 'oxDetail', 'blankFirst'];   // 처음 기록한 뒤에는 바뀌지 않는 항목
-const T_UNITS = '단원', T_OX = 'OX', T_NEWS = '뉴스', T_CONFUSE = '헷갈린개념', T_BLANK = '빈칸', T_ESSAY = '서술형';
-const CONTENT_TABS = [T_UNITS, T_OX, T_NEWS, T_CONFUSE, T_BLANK, T_ESSAY];
+const T_UNITS = '단원', T_OX = 'OX', T_NEWS = '뉴스', T_CONFUSE = '헷갈린개념', T_BLANK = '빈칸', T_ESSAY = '서술형', T_REF = '참고자료', T_APPLY = '개념적용';
+const CONTENT_TABS = [T_UNITS, T_OX, T_NEWS, T_CONFUSE, T_BLANK, T_ESSAY, T_REF, T_APPLY];
 const CONTENT_CACHE = 'content_v1';
 const SHEET_OPEN = '진도공개';
 
@@ -157,7 +157,7 @@ function getContent() {
   const cache = CacheService.getScriptCache();
   const hit = cache.get(CONTENT_CACHE);
   if (hit) return JSON.parse(hit);
-  const ox = readTable(T_OX), news = readTable(T_NEWS), conf = readTable(T_CONFUSE), blank = readTable(T_BLANK), essay = readTable(T_ESSAY);
+  const ox = readTable(T_OX), news = readTable(T_NEWS), conf = readTable(T_CONFUSE), blank = readTable(T_BLANK), essay = readTable(T_ESSAY), ref = readTable(T_REF), apply = readTable(T_APPLY);
   const byNum = (a, b) => Number(a['번호']) - Number(b['번호']);
   const units = readTable(T_UNITS).filter(u => u['단원코드'] && u['공개'] !== 'X').map(u => {
     const code = u['단원코드'];
@@ -171,6 +171,8 @@ function getContent() {
         title: n['제목'], source: n['출처'], date: n['날짜'], url: n['링크'], summary: n['요약'], ask: n['질문'], answer: n['설명'] })),
       confuse: conf.filter(c => c['단원코드'] === code && c['보기']).map(c => c['보기']),
       blanks: blank.filter(b => b['단원코드'] === code && b['문장']).sort(byNum).map(b => ({ q: String(b['문장']).replace(/\{[^}]*\}/g, '{{}}'), sec: b['소제목'] || '' })),   // 정답은 빼고 보내요
+      refs: ref.filter(r => r['단원코드'] === code && r['주소'] && /^https?:\/\//.test(String(r['주소']).trim())).map(r => ({ sec: r['소제목'] || '', title: r['제목'] || '참고 자료', kind: r['종류'] || '', url: String(r['주소']).trim(), embed: String(r['열기'] || '').trim() === '삽입' })),
+      applies: apply.filter(a => a['단원코드'] === code && a['문제']).sort(byNum).map(a => ({ n: a['번호'], q: a['문제'], outline: a['힌트'], sec: a['소제목'] || '' })),
       essays: essay.filter(e => e['단원코드'] === code && e['질문']).sort(byNum).map(e => ({ n: e['번호'], q: e['질문'], hint: e['제시어'], outline: e['힌트'], sec: e['소제목'] || '' })),
     };
   });
@@ -260,6 +262,7 @@ function doPost(e) {
         const notes = getNotes(u.id, String(req.unit || ''));
         if (notes.summary && req.code) { const r = findUnitRow(String(req.code)); if (r) notes._model = r['모범 정리']; }
         if (req.code) readTable(T_ESSAY).filter(e => e['단원코드'] === String(req.code) && notes['essay' + e['번호']]).forEach(e => { notes['_m_essay' + e['번호']] = e['모범 답안']; });   // 서술형은 저장한 뒤에 모범 답안 보여 주기
+        if (req.code) readTable(T_APPLY).filter(a => a['단원코드'] === String(req.code) && a['모범 답안'] && notes['apply' + a['번호']]).forEach(a => { notes['_m_apply' + a['번호']] = a['모범 답안']; });   // 개념 적용도 저장한 뒤에 모범 답안 보여 주기
         return { ok: true, notes };
       }));
       case 'myNotes':  return out(withUser(req, u => ({ ok: true, notes: getAllNotes(u.id) })));
@@ -378,6 +381,8 @@ function saveNote(u, req) {
   if (field === 'summary' && req.code) { const r = findUnitRow(String(req.code)); if (r) res.model = r['모범 정리']; }   // 저장한 뒤에 모범 정리 보여 주기
   const em = /^essay(\d+)$/.exec(field);
   if (em && req.code) { const r = readTable(T_ESSAY).find(e => e['단원코드'] === String(req.code) && String(e['번호']) === em[1]); if (r) res.model = r['모범 답안']; }
+  const am = /^apply(\d+)$/.exec(field);
+  if (am && req.code) { const r = readTable(T_APPLY).find(a => a['단원코드'] === String(req.code) && String(a['번호']) === am[1]); if (r && r['모범 답안']) res.model = r['모범 답안']; }
   return res;
 }
 

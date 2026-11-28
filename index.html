@@ -80,6 +80,8 @@ h2{font-size:16px;margin:28px 0 10px;font-weight:700}
 .eq .body{display:block;white-space:pre-wrap}
 .pf-es{margin-top:8px;white-space:pre-wrap}
 .pf-bl{font-weight:600}
+.fbtop{display:flex;flex-direction:column;gap:10px;margin-bottom:18px}.fbitem>b{display:block;margin-bottom:4px}
+.applyqs{display:flex;flex-direction:column;gap:18px}
 .hub3{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin:6px 0 20px}
 .hub{display:flex;flex-direction:column;gap:6px;padding:20px 18px;background:var(--surface);border:1px solid var(--line);border-radius:16px;text-decoration:none;color:inherit;transition:transform .18s,border-color .18s,box-shadow .18s}
 .hub:hover{transform:translateY(-2px);border-color:var(--c,var(--sea));box-shadow:0 6px 18px color-mix(in srgb,var(--c,var(--sea)) 18%,transparent)}
@@ -337,6 +339,7 @@ table.lt th{background:var(--sunk);color:var(--body);font-weight:600}
 details{background:var(--sunk);border:1px solid var(--line);border-radius:12px;padding:9px 14px;margin:0 0 12px;font-size:.95em}
 details summary{cursor:pointer;font-weight:600;font-size:.9em;color:var(--body)}
 details[open] summary{margin-bottom:8px}
+.refs{display:grid;gap:10px;margin:12px 0}.ref{border:1px solid var(--line,#d8e2e0);border-radius:12px;padding:12px 14px}.ref .rt{margin:2px 0 8px}.ref iframe{width:100%;height:460px;border:0;border-radius:8px;background:#fff;margin-bottom:8px}.rlink{font-weight:600;color:var(--sea)}
 .qa{margin:0 0 14px}.qa .q{font-weight:600;margin-bottom:8px}
 .shown{background:var(--sunk);border-radius:12px;padding:11px 15px;margin:0 0 14px}
 .shown .lab{font-size:.85em;color:var(--faint);font-weight:600;margin-bottom:4px}
@@ -916,7 +919,7 @@ function viewGate() {
   return `<div class="gate">
     <div class="gate-ic">${ic('atom')}</div>
     <h1>${esc(SITE.title)}</h1>
-    <p class="lead">학번과 비밀번호로 로그인하면 내 과목의 개념 정리, 실험실, 문제풀이를 볼 수 있어요.</p>
+    <p class="lead">학번과 비밀번호로 로그인하면 내 과목의 개념정리, 개념적용, 가상실험실, 문제은행을 볼 수 있어요.</p>
     ${DEMO ? `<div class="banner"><b>체험 모드</b> · 학생은 <b>10101</b> / <b>1234</b>, 선생님은 <b>teacher</b> / <b>1234</b>로 로그인해 볼 수 있어요.</div>` : ''}
     <button class="btn primary" onclick="openLogin()">로그인</button>
   </div>`;
@@ -926,9 +929,10 @@ function viewHome() {
   return `
     ${DEMO ? `<div class="banner"><b>체험 모드</b> · 아직 구글 시트와 연결되지 않았어요. 기록은 이 브라우저에만 저장돼요.</div>` : ''}
     <div class="hub3">
-      <a class="hub" href="#/study" style="--c:var(--sea)">${ic('book')}<h3>개념 정리</h3><p>읽고 · 빈칸 · 서술형 · OX로 점검해요</p></a>
-      <a class="hub" href="${esc(LINKS.lab)}" target="_blank" rel="noopener" style="--c:#e0a458">${ic('flask')}<h3>내 실험실</h3><p>디지털 실험실 · 활동 보고서</p></a>
-      <a class="hub" href="#/quiz" style="--c:#6bbf8e">${ic('target')}<h3>문제풀이</h3><p>문제은행에서 문제 풀기</p></a>
+      <a class="hub" href="#/study" style="--c:var(--sea)">${ic('book')}<h3>개념정리</h3><p>읽고 · 빈칸 · 서술형 · OX로 점검해요</p></a>
+      <a class="hub" href="#/apply" style="--c:#b48be0">${ic('help')}<h3>개념적용</h3><p>선생님이 낸 생각해볼 문제</p></a>
+      <a class="hub" href="${esc(LINKS.lab)}" target="_blank" rel="noopener" style="--c:#e0a458">${ic('flask')}<h3>가상실험실</h3><p>디지털 실험실 · 활동 보고서</p></a>
+      <a class="hub" href="#/quiz" style="--c:#6bbf8e">${ic('target')}<h3>문제은행</h3><p>문제은행에서 문제 풀기</p></a>
     </div>
     ${viewTodo()}
     <h2>바로가기</h2>
@@ -938,8 +942,8 @@ function viewHome() {
 /* 개념 정리: 내 과목 목록 */
 function viewStudy() {
   const list = mySubjects().filter(s => isTeacher() || allUnits(s).length);
-  return `<div class="crumbs"><a href="#/">홈</a>${ic('right')}개념 정리</div>
-    <h1>개념 정리</h1>
+  return `<div class="crumbs"><a href="#/">홈</a>${ic('right')}개념정리</div>
+    <h1>개념정리</h1>
     <div class="subjs">
       ${list.length ? list.map(s => {
         const p = progressOf(s, allUnits(s)), n = allUnits(s).length;
@@ -952,12 +956,28 @@ function viewStudy() {
     </div>`;
 }
 
-/* 문제풀이: 내 과목의 문제은행 */
+/* 개념적용: 선생님이 낸 '생각해볼 문제' */
+function viewApply(sid, code) {
+  const s = sid && subjectById(sid), u = s && allUnits(s).find(x => x.code === code);
+  if (u && (u.applies || []).length) {
+    const unitKey = `${s.id}|${u.code}`;
+    curUnit = { s, u, L: { steps: [] }, unitKey, st: { oxs: {}, cur: 0, warned: {} }, apply: true }; pages = [];
+    return `<div class="crumbs"><a href="#/">홈</a>${ic('right')}<a href="#/apply">개념적용</a></div>
+      <h1>${esc(u.title)}</h1><p class="lead">배운 내용을 떠올려 내 생각을 써 보세요. 저장하면 선생님이 볼 수 있어요.</p>
+      <div class="applyqs" style="--c:${sc(s)}">${u.applies.map(a => renderWrite({ b: { write: 'apply' + a.n, label: a.q, outline: a.outline, sec: a.sec, placeholder: '내 생각을 적어 보세요.', hasModel: true }, st: { id: '' } })).join('')}</div>`;
+  }
+  const list = mySubjects().map(s => ({ s, us: allUnits(s).filter(x => (x.applies || []).length) })).filter(v => v.us.length);
+  return `<div class="crumbs"><a href="#/">홈</a>${ic('right')}개념적용</div>
+    <h1>개념적용</h1>
+    ${list.length ? list.map(v => `<h2>${esc(v.s.title)}</h2><div class="links">${v.us.map(x => `<a class="lk" href="#/apply/${esc(v.s.id)}/${esc(x.code)}">${ic('help')}<div><b>${esc(x.title)}</b><span>생각해볼 문제 ${x.applies.length}개</span></div></a>`).join('')}</div>`).join('') : '<div class="banner">아직 올라온 생각해볼 문제가 없어요. 선생님이 문제를 올리면 여기에 나와요.</div>'}`;
+}
+
+/* 문제은행: 내 과목의 문제은행 */
 function viewQuiz() {
   const seen = {}, banks = [];
   mySubjects().forEach(s => { if (!s.bank) return; (seen[s.bank] = seen[s.bank] || (banks.push({ url: s.bank, names: [], s }), banks[banks.length - 1])).names.push(s.title); });
-  return `<div class="crumbs"><a href="#/">홈</a>${ic('right')}문제풀이</div>
-    <h1>문제풀이</h1>
+  return `<div class="crumbs"><a href="#/">홈</a>${ic('right')}문제은행</div>
+    <h1>문제은행</h1>
     <div class="links">${banks.length ? banks.map(b => lk(b.url, 'target', `${b.names.join(' · ')} 문제은행`, '문제풀기 · 빈칸 · OX · 서술형')).join('') : '<div class="banner">연결된 문제은행이 없어요.</div>'}</div>`;
 }
 
@@ -967,7 +987,7 @@ function viewTodo() {
   const list = lessonUnits().map(x => ({ ...x, p: progressOf(x.s, [x.u]) })).filter(x => x.p.n < x.p.total);
   setTimeout(loadMyStat, 0);
   return `<div class="todo"><h2>${ic('target')} 오늘 할 일</h2>
-    ${list.length ? `<ul>${list.map(x => `<li><a href="#/${x.s.id}/${encodeURIComponent(x.u.code)}" style="--c:${sc(x.s)}"><span>${esc(x.u.title)} <small>${esc(x.s.title)} ${esc(x.u.code)}</small></span><small>${posOf(x.key) > 0 ? '이어하기 · ' : ''}${x.p.n}/${x.p.total} 완료</small></a></li>`).join('')}</ul>`
+    ${list.length ? `<ul>${list.map(x => `<li><a href="#/${x.s.id}/${encodeURIComponent(x.u.code)}" style="--c:${sc(x.s)}"><span>${esc(x.u.title)}</span><small>${posOf(x.key) > 0 ? '이어하기 · ' : ''}${x.p.n}/${x.p.total} 완료</small></a></li>`).join('')}</ul>`
       : `<div class="clear">${ic('check-circle')} 지금 할 점검을 모두 마쳤어요!</div>`}
     <div class="mystat" id="mystat"></div><div class="fbnote" id="fbnote"></div></div>`;
 }
@@ -977,7 +997,7 @@ async function loadMyStat() {
     const all = r.notes || {}, units = lessonUnits();
     const vals = units.map(x => all[x.key] || {});
     const ox = vals.map(n => n.ox).filter(Boolean).map(o => { const [g, t] = o.split('/').map(Number); return t ? g / t : 0; });
-    const sub = vals.filter(n => n.summary).length, fb = vals.filter(n => n.fbScore || n.fbComment).length;
+    const sub = vals.filter(n => n.summary).length, fb = Object.values(all).filter(n => n.fbScore || n.fbComment).length;
     const ms = $('mystat');
     if (ms) ms.innerHTML = `<span>개념 정리 <b>${sub}</b> / ${units.length}</span><span>OX 평균 <b>${ox.length ? Math.round(ox.reduce((a, b) => a + b, 0) / ox.length * 100) + '%' : '-'}</b></span>${fb ? `<span>선생님 피드백 <b>${fb}</b></span>` : ''}`;
     const el = $('fbnote'); if (el && fb) el.innerHTML = `선생님 피드백이 ${fb}개 있어요. <a href="#/me">내 기록에서 보기</a>`;
@@ -1106,7 +1126,7 @@ function applyContent(data) {
     if (!ch) { ch = { title: x.chapter || '기타', units: [], fromSheet: true }; s.chapters.push(ch); }
     const id = `sheet:${s.id}:${x.code}`;
     if (x.locked) ch.units.push({ code: x.code, title: x.title, locked: true, week: x.week, fromSheet: true });   // 아직 열리지 않은 단원
-    else { LESSONS[id] = buildLesson(x, s); ch.units.push({ code: x.code, title: x.title, lesson: id, fromSheet: true }); }
+    else { LESSONS[id] = buildLesson(x, s); ch.units.push({ code: x.code, title: x.title, lesson: id, fromSheet: true, applies: x.applies || [] }); }
     ch.units.sort((a, b) => a.code.localeCompare(b.code, 'ko', { numeric: true }));
   });
 }
@@ -1116,6 +1136,7 @@ function buildLesson(x, s) {
   const steps = [{ id: 'concept', type: 'concept', title: '개념 정리', blocks: [
     ...(x.img ? [{ img: x.img, caption: x.imgCaption }] : []),
     ...(x.points.length ? [{ list: x.points.map(md) }] : []),
+    ...((x.refs || []).length ? [{ refs: x.refs }] : []),
     // 빈칸 채우기·서술형이 있는 단원은 '내 말로 정리' 쓰기를 빼요 (그 단계들이 대신해요)
     ...((x.blanks || []).length || (x.essays || []).length ? [] : [{ write: 'summary', label: '핵심 개념을 내 말로 2~3문장 정리해 보세요.', hint: x.hint, placeholder: '제시어를 넣어 정리해 보세요.', hasModel: x.hasModel }]),
   ] }];
@@ -1127,7 +1148,6 @@ function buildLesson(x, s) {
     ...(x.ox.length ? [{ ox: x.ox.map(o => ({ q: md(o.q) })) }] : []),
     ...(x.confuse.length ? [{ confuse: x.confuse }] : []),
     { question: true },
-    ...(s.bank ? [{ links: [{ title: `문제은행 · ${x.title} 더 풀기`, desc: `SJ ${s.title} 문제은행 ${x.code}`, url: s.bank }] }] : []),
   ] });
   return { goal: x.goal, time: x.time, img: 'images/', steps };
 }
@@ -1227,6 +1247,7 @@ function renderBlock(b, L, unitKey, bid) {
   if (b.callout) return `<div class="callout">${ic('help')} ${b.callout}</div>`;
   if (b.img) { const src = /^https?:/.test(b.img) ? b.img : L.img + b.img;
     return `<figure><a href="${esc(src)}" target="_blank" rel="noopener" style="${b.width ? `max-width:${b.width}px;margin:0 auto` : ''}"><img src="${esc(src)}" alt="${esc(b.caption || '')}" loading="lazy" onload="imgShape(this)"></a>${b.caption ? `<figcaption>${esc(b.caption)}</figcaption>` : ''}</figure>`; }
+  if (b.refs) return `<div class="refs">${b.refs.map(r => `<div class="ref">${r.sec ? `<span class="esec">${esc(r.sec)}</span>` : ''}<div class="rt"><b>${esc(r.title)}</b>${r.kind ? ` <span class="muted">${esc(r.kind)}</span>` : ''}</div>${r.embed ? `<iframe src="${esc(r.url)}" loading="lazy" allowfullscreen sandbox="allow-scripts allow-same-origin allow-popups allow-forms" title="${esc(r.title)}"></iframe>` : ''}<a class="rlink" href="${esc(r.url)}" target="_blank" rel="noopener">${r.embed ? '새 탭에서 크게 보기' : '열어 보기'}</a></div>`).join('')}</div>`;
   if (b.more) return `<details><summary>${esc(b.more)}</summary><ul>${b.list.map(x => `<li>${x}</li>`).join('')}</ul></details>`;
   if (b.list) return `<ul class="pts">${b.list.map(x => `<li>${x}</li>`).join('')}</ul>`;
   if (b.table) return `<table class="lt"><thead><tr>${b.table[0].map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>${b.table.slice(1).map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
@@ -1658,11 +1679,11 @@ document.addEventListener('keydown', e => {
 });
 let tx0 = null, ty0 = null;
 document.getElementById('app').addEventListener('touchstart', e => {
-  if (!curUnit || e.target.closest('textarea,input,select,table,figure')) { tx0 = null; return; }
+  if (!curUnit || curUnit.apply || e.target.closest('textarea,input,select,table,figure')) { tx0 = null; return; }
   tx0 = e.touches[0].clientX; ty0 = e.touches[0].clientY;
 }, { passive: true });
 document.getElementById('app').addEventListener('touchend', e => {
-  if (tx0 == null || !curUnit) return;
+  if (tx0 == null || !curUnit || curUnit.apply) return;
   const dx = e.changedTouches[0].clientX - tx0, dy = e.changedTouches[0].clientY - ty0; tx0 = null;
   if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.6) go(pageIdx + (dx < 0 ? 1 : -1));
 }, { passive: true });
@@ -1711,7 +1732,12 @@ async function loadPortfolio() {
         </a>`;
       }).join('')}</div>`;
   }).join('');
-  box.innerHTML = html || '<p>아직 점검할 단원이 없어요.</p>';
+  const fbRows = Object.entries(all).filter(([, n]) => n.fbScore || n.fbComment).map(([k, n]) => {
+    const [sid, code] = k.split('|'), sj = subjectById(sid), un = sj && allUnits(sj).find(x => x.code === code);
+    return `<div class="fbitem"><b>${esc(un ? un.title : code)}</b>${fbBox(n.fbScore, n.fbComment)}</div>`;
+  });
+  const fbTop = fbRows.length ? `<h2>${ic('chat')} 선생님 피드백</h2><div class="fbtop">${fbRows.join('')}</div>` : '';
+  box.innerHTML = fbTop + (html || '<p>아직 점검할 단원이 없어요.</p>');
 }
 
 
@@ -2126,6 +2152,11 @@ function route() {
   sky.set(!isLesson && sid !== 'dash' && sid !== 'me');
   if (sid === 'me') { $('app').innerHTML = viewPortfolio(); return; }
   if (sid === 'study') { $('app').innerHTML = viewStudy(); return; }
+  if (sid === 'apply') {
+    $('app').innerHTML = viewApply(code, location.hash.replace(/^#\/?/, '').split('/').map(decodeURIComponent)[2]);
+    if (curUnit && curUnit.apply) { document.querySelectorAll('.applyqs textarea').forEach(updateHints); loadNotes(curUnit.s, curUnit.u); }
+    return;
+  }
   if (sid === 'quiz') { $('app').innerHTML = viewQuiz(); return; }
   if (sid === 'dash') { $('app').innerHTML = viewDash(); return; }
   if (isLesson) {
